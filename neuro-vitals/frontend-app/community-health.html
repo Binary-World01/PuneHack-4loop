@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Neuro-Vitals | Community Health Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&family=Poppins:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+        rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ec5b13", // Original Orange
+                        "accent-blue": "#00d2ff", // Original Blue
+                        "background-dark": "#0a0604", // Original Dark BG
+                        "neuro-base": "#1e293b", // Card Placeholder
+                        "neuro-green": "#10b981",
+                        "neuro-orange": "#f97316",
+                        "neuro-red": "#ef4444",
+                    },
+                    fontFamily: {
+                        "sans": ["Public Sans", "sans-serif"],
+                        "display": ["Poppins", "sans-serif"]
+                    },
+                    boxShadow: {
+                        "glow": "0 0 20px rgba(236, 91, 19, 0.4)", // Orange Glow
+                        "emergency": "0 0 30px rgba(239, 68, 68, 0.4)"
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        body {
+            font-family: 'Public Sans', sans-serif;
+            background-color: #0a0604;
+            background-image: radial-gradient(circle at top right, #2d1b15, #0a0604, #0a0604);
+            color: #f8fafc;
+        }
+
+        /* Glassmorphism - Matching Theme */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+            border-color: rgba(236, 91, 19, 0.3);
+        }
+
+        /* Sidebar Glass */
+        aside {
+            background: rgba(10, 6, 4, 0.95) !important;
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+            border-radius: 1rem;
+            z-index: 10;
+        }
+
+        /* Dark theme for map */
+        .leaflet-container {
+            background: #1a1a1a;
+        }
+
+        /* Custom marker styles */
+        .heat-marker {
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .marker-critical {
+            background: #ef4444;
+            animation: pulse-critical 2s infinite;
+        }
+
+        .marker-high {
+            background: #ec5b13;
+            animation: pulse-high 2s infinite;
+        }
+
+        .marker-medium {
+            background: #fbbf24;
+            animation: pulse-medium 2s infinite;
+        }
+
+        @keyframes pulse-critical {
+
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(239, 68, 68, 0.8);
+            }
+
+            50% {
+                box-shadow: 0 0 40px rgba(239, 68, 68, 1);
+            }
+        }
+
+        @keyframes pulse-high {
+
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(236, 91, 19, 0.8);
+            }
+
+            50% {
+                box-shadow: 0 0 40px rgba(236, 91, 19, 1);
+            }
+        }
+
+        @keyframes pulse-medium {
+
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(251, 191, 36, 0.8);
+            }
+
+            50% {
+                box-shadow: 0 0 40px rgba(251, 191, 36, 1);
+            }
+        }
+
+        /* Animations */
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .animate-slide-in {
+            animation: slideInRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0a0604;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #ec5b13 0%, #ff8a3d 100%);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #ff6b2b 0%, #ffaa5d 100%);
+        }
+    </style>
+</head>
+
+<body class="antialiased min-h-screen flex flex-col md:flex-row overflow-hidden">
+
+    <!-- Mobile Sidebar Toggle -->
+    <div
+        class="md:hidden p-4 flex justify-between items-center border-b border-white/5 bg-background-dark z-50 fixed w-full top-0 left-0">
+        <div class="flex items-center gap-2">
+            <span class="material-symbols-rounded text-primary">neurology</span>
+            <span class="font-bold text-lg">Neuro-Vitals</span>
+        </div>
+        <button onclick="document.getElementById('sidebar').classList.toggle('-translate-x-full')" class="text-white">
+            <span class="material-symbols-rounded">menu</span>
+        </button>
+    </div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar"
+        class="fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 w-64 md:w-20 lg:w-64 bg-background-dark/95 border-r border-white/5 z-40 transition-transform duration-300 flex flex-col pt-16 md:pt-0">
+        <div class="p-6 flex items-center gap-3">
+            <div class="w-8 h-8 rounded-xl bg-primary/20 flex items-center justify-center text-primary shadow-glow">
+                <span class="material-symbols-rounded">neurology</span>
+            </div>
+            <span class="font-bold text-lg md:hidden lg:block">Neuro-Vitals</span>
+        </div>
+
+        <nav class="flex-1 px-3 space-y-1">
+            <a href="dashboard.html"
+                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
+                <span class="material-symbols-rounded">grid_view</span>
+                <span class="md:hidden lg:block text-sm">Dashboard</span>
+            </a>
+            <a href="symptom-analysis.html"
+                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
+                <span class="material-symbols-rounded">health_metrics</span>
+                <span class="md:hidden lg:block text-sm">Analysis</span>
+            </a>
+            <a href="adversarial-diagnosis.html"
+                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
+                <span class="material-symbols-rounded">swords</span>
+                <span class="md:hidden lg:block text-sm">Diagnosis Arena</span>
+            </a>
+            <a href="health-trajectory.html"
+                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
+                <span class="material-symbols-rounded">monitoring</span>
+                <span class="md:hidden lg:block text-sm">Trends</span>
+            </a>
+            <a href="community-health.html"
+                class="flex items-center gap-3 px-3 py-3 rounded-xl bg-primary/10 text-primary border border-primary/20 font-medium transition-colors">
+                <span class="material-symbols-rounded">groups</span>
+                <span class="md:hidden lg:block text-sm">Community</span>
+            </a>
+            <a href="integrations.html"
+                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
+                <span class="material-symbols-rounded">devices_wearables</span>
+                <span class="md:hidden lg:block text-sm">Integrations</span>
+            </a>
+            <a href="#" onclick="alert('Medication Schedule')"
+                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
+                <span class="material-symbols-rounded">medication</span>
+                <span class="md:hidden lg:block text-sm">Meds</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-white/5">
+            <button onclick="handleSignOut()"
+                class="flex items-center gap-3 w-full px-3 py-2 rounded-xl text-slate-400 hover:text-neuro-red hover:bg-neuro-red/10 transition-colors">
+                <span class="material-symbols-rounded">logout</span>
+                <span class="md:hidden lg:block text-sm font-medium">Sign Out</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col relative overflow-y-auto h-screen bg-background-dark mt-16 md:mt-0">
+        <!-- Floating Header -->
+        <header
+            class="sticky top-0 z-30 bg-background-dark/80 backdrop-blur-md border-b border-white/5 px-6 py-4 flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-bold">Community Health Intel</h2>
+                <div class="flex items-center gap-2 mt-1">
+                    <span class="text-[10px] uppercase tracking-widest text-primary font-bold shadow-glow">Real-Time
+                        Network</span>
+                    <span
+                        class="px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/30 text-green-400 text-[9px] font-black uppercase tracking-wider flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                        LIVE
+                    </span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <div class="glass-card px-4 py-2 rounded-xl hidden md:block">
+                    <p class="text-[10px] text-white/40 uppercase font-bold">Active Clusters</p>
+                    <p class="text-lg font-black text-primary leading-none" id="cluster-count">4</p>
+                </div>
+                <button
+                    class="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-white relative hover:bg-white/5 transition-colors">
+                    <span class="material-symbols-rounded">notifications</span>
+                </button>
+                <div class="relative group">
+                    <div
+                        class="h-10 w-10 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-primary font-bold cursor-pointer">
+                        P
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="p-4 md:p-8 flex-1 flex flex-col">
+            <div class="max-w-[1600px] mx-auto w-full h-full flex flex-col lg:flex-row gap-6">
+                <!-- Map Section -->
+                <div class="flex-1 glass-card rounded-2xl p-6 overflow-hidden flex flex-col min-h-[400px]">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h4 class="text-xs font-bold text-white/40 uppercase tracking-widest">Geographic Heat Map
+                            </h4>
+                            <p class="text-sm text-white/60 mt-1">Real-time outbreak detection across India</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button
+                                class="px-4 py-2 rounded-lg bg-primary/10 text-primary text-xs font-bold ring-1 ring-primary/20">LIVE</button>
+                            <button
+                                class="px-4 py-2 rounded-lg bg-white/5 text-white/40 text-xs font-bold hover:bg-white/10 transition-colors">HISTORIC</button>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 relative overflow-hidden rounded-xl bg-neutral-900">
+                        <div id="map"></div>
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="flex items-center gap-6 mt-4 flex-wrap">
+                        <div class="flex items-center gap-2">
+                            <div class="w-2.5 h-2.5 rounded-full bg-accent-blue shadow-[0_0_10px_rgba(0,210,255,0.5)]">
+                            </div>
+                            <span class="text-xs text-white/60">Low (1-20)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-2.5 h-2.5 rounded-full bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)]">
+                            </div>
+                            <span class="text-xs text-white/60">Medium (21-50)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_10px_rgba(236,91,19,0.5)]">
+                            </div>
+                            <span class="text-xs text-white/60">High (51-100)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]">
+                            </div>
+                            <span class="text-xs text-white/60">Critical (100+)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Analytics Panel -->
+                <div class="w-full lg:w-96 flex flex-col gap-6 overflow-y-auto">
+                    <!-- Active Alerts -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <h5 class="text-sm font-bold mb-4 flex items-center gap-2">
+                            <span class="material-symbols-rounded text-red-500">warning</span>
+                            Active Alerts
+                        </h5>
+                        <div class="space-y-3">
+                            <div
+                                class="p-4 rounded-xl bg-red-500/10 border border-red-500/30 hover:bg-red-500/15 transition-colors cursor-pointer">
+                                <div class="flex items-start gap-3">
+                                    <span
+                                        class="material-symbols-rounded text-red-500 text-lg">notification_important</span>
+                                    <div>
+                                        <p class="font-bold text-xs text-white">Delhi NCR Cluster</p>
+                                        <p class="text-[10px] text-white/50 mt-1">128 cases detected within 5km
+                                            radius</p>
+                                        <p class="text-[9px] text-red-400 mt-2 font-bold flex items-center gap-1"><span
+                                                class="material-symbols-rounded text-[10px]">schedule</span> 15m ago</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div
+                                class="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/30 hover:bg-yellow-500/15 transition-colors cursor-pointer">
+                                <div class="flex items-start gap-3">
+                                    <span class="material-symbols-rounded text-yellow-500 text-lg">info</span>
+                                    <div>
+                                        <p class="font-bold text-xs text-white">Bangalore South</p>
+                                        <p class="text-[10px] text-white/50 mt-1">Moderate increase detected</p>
+                                        <p class="text-[9px] text-yellow-400 mt-2 font-bold flex items-center gap-1">
+                                            <span class="material-symbols-rounded text-[10px]">schedule</span> 2h ago
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Trending Symptoms -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <h5 class="text-sm font-bold mb-4 flex items-center gap-2">
+                            <span class="material-symbols-rounded text-primary">trending_up</span>
+                            Trending (24h)
+                        </h5>
+                        <div class="space-y-3">
+                            <div
+                                class="flex justify-between items-center p-3 rounded-xl bg-white/5 border border-white/5">
+                                <div>
+                                    <p class="text-xs font-semibold text-white">Severe Headache</p>
+                                    <p class="text-[10px] text-white/40">+22%</p>
+                                </div>
+                                <div class="text-primary text-lg font-black tracking-tighter">↑ 22%</div>
+                            </div>
+                            <div
+                                class="flex justify-between items-center p-3 rounded-xl bg-white/5 border border-white/5">
+                                <div>
+                                    <p class="text-xs font-semibold text-white">Dizziness</p>
+                                    <p class="text-[10px] text-white/40">+15%</p>
+                                </div>
+                                <div class="text-primary text-lg font-black tracking-tighter">↑ 15%</div>
+                            </div>
+                            <div
+                                class="flex justify-between items-center p-3 rounded-xl bg-white/5 border border-white/5">
+                                <div>
+                                    <p class="text-xs font-semibold text-white">Nausea</p>
+                                    <p class="text-[10px] text-white/40">+8%</p>
+                                </div>
+                                <div class="text-primary text-lg font-black tracking-tighter">↑ 8%</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Network Stats -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <h5 class="text-sm font-bold mb-4 flex items-center gap-2">
+                            <span class="material-symbols-rounded text-accent-blue">hub</span>
+                            Network Stats
+                        </h5>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-xs text-white/60">Nodes Active</span>
+                                    <span class="text-xs font-bold text-white">18,442</span>
+                                </div>
+                                <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                    <div class="h-full bg-accent-blue w-[92%] shadow-[0_0_10px_rgba(0,210,255,0.5)]">
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-xs text-white/60">Sync Rate</span>
+                                    <span class="text-xs font-bold text-white">98.3%</span>
+                                </div>
+                                <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                    <div class="h-full bg-green-500 w-[98%] shadow-[0_0_10px_rgba(16,185,129,0.5)]">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Check authentication and fetch profile
+        window.addEventListener('DOMContentLoaded', async () => {
+            let currentUser = JSON.parse(localStorage.getItem('neurovitals_currentUser'));
+            if (!currentUser) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            if (currentUser.email) {
+                try {
+                    const { data: profile } = await window.supabaseClient
+                        .from('profiles')
+                        .select('*')
+                        .eq('email', currentUser.email)
+                        .single();
+                    if (profile) {
+                        currentUser = { ...currentUser, ...profile };
+                        localStorage.setItem('neurovitals_currentUser', JSON.stringify(currentUser));
+                    }
+                } catch (err) {
+                    console.error('Error fetching profile:', err);
+                }
+            }
+        });
+
+        function handleSignOut() {
+            if (confirm('Log out of Neuro-Vitals?')) {
+                localStorage.removeItem('neurovitals_currentUser');
+                window.location.href = 'index.html';
+            }
+        }
+
+        // Initialize map centered on India
+        const map = L.map('map').setView([20.5937, 78.9629], 5);
+
+        // Add dark theme tile layer
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(map);
+
+        // Define cluster locations with data
+        const clusters = [
+            {
+                name: 'Delhi NCR',
+                lat: 28.6139,
+                lng: 77.2090,
+                cases: 128,
+                severity: 'critical',
+                color: '#ef4444'
+            },
+            {
+                name: 'Mumbai',
+                lat: 19.0760,
+                lng: 72.8777,
+                cases: 47,
+                severity: 'high',
+                color: '#ec5b13'
+            },
+            {
+                name: 'Bangalore',
+                lat: 12.9716,
+                lng: 77.5946,
+                cases: 32,
+                severity: 'medium',
+                color: '#fbbf24'
+            },
+            {
+                name: 'Kolkata',
+                lat: 22.5726,
+                lng: 88.3639,
+                cases: 18,
+                severity: 'low',
+                color: '#00d2ff'
+            },
+            {
+                name: 'Chennai',
+                lat: 13.0827,
+                lng: 80.2707,
+                cases: 28,
+                severity: 'medium',
+                color: '#fbbf24'
+            }
+        ];
+
+        // Add markers for each cluster
+        clusters.forEach(cluster => {
+            // Create custom icon
+            const icon = L.divIcon({
+                className: 'custom-marker',
+                html: `<div class="heat-marker marker-${cluster.severity}" style="width: ${20 + cluster.cases / 3}px; height: ${20 + cluster.cases / 3}px;"></div>`,
+                iconSize: [20 + cluster.cases / 3, 20 + cluster.cases / 3],
+                iconAnchor: [10 + cluster.cases / 6, 10 + cluster.cases / 6]
+            });
+
+            // Add marker
+            const marker = L.marker([cluster.lat, cluster.lng], { icon: icon }).addTo(map);
+
+            // Add popup
+            marker.bindPopup(`
+                <div style="background: rgba(18, 9, 7, 0.95); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); min-width: 200px;">
+                    <h3 style="color: ${cluster.color}; font-weight: bold; margin-bottom: 8px; font-size: 14px;">${cluster.name}</h3>
+                    <div style="color: rgba(255,255,255,0.8); font-size: 12px; margin-bottom: 4px;">
+                        <strong>Cases:</strong> ${cluster.cases}
+                    </div>
+                    <div style="color: rgba(255,255,255,0.8); font-size: 12px;">
+                        <strong>Severity:</strong> <span style="color: ${cluster.color}; text-transform: uppercase;">${cluster.severity}</span>
+                    </div>
+                </div>
+            `);
+
+            // Add circle overlay for heat effect
+            L.circle([cluster.lat, cluster.lng], {
+                color: cluster.color,
+                fillColor: cluster.color,
+                fillOpacity: 0.15,
+                radius: cluster.cases * 1000,
+                weight: 2
+            }).addTo(map);
+        });
+    </script>
+</body>
+
+</html>
