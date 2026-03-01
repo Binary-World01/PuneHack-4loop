@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neuro Vitals - Outbreak Admin Dashboard</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #000;
+            background-image:
+                radial-gradient(circle at 20% 30%, rgba(255, 115, 0, 0.2), transparent 45%),
+                radial-gradient(circle at 80% 10%, rgba(255, 60, 0, 0.15), transparent 40%);
+            color: white;
+        }
+
+        #header {
+            background: rgba(255, 115, 0, 0.08);
+            backdrop-filter: blur(12px);
+            padding: 22px;
+            text-align: center;
+            position: relative;
+            border-bottom: 1px solid rgba(255, 115, 0, 0.4);
+            box-shadow: 0 0 40px rgba(255, 115, 0, 0.3);
+        }
+
+        #header h1 {
+            font-size: 26px;
+            color: #ff6a00;
+            letter-spacing: 1px;
+        }
+
+        #header p {
+            margin-top: 6px;
+            font-size: 14px;
+            color: #ffb366;
+        }
+
+        .nav-links {
+            position: absolute;
+            top: 22px;
+            left: 25px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-link {
+            background: linear-gradient(135deg, #ff6a00, #ff3c00);
+            color: white;
+            padding: 7px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 0 20px rgba(255, 115, 0, 0.7);
+            transition: 0.3s;
+        }
+
+        .nav-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 35px rgba(255, 115, 0, 1);
+        }
+
+        #map {
+            height: calc(100vh - 130px);
+            width: 100%;
+        }
+
+        #legend {
+            position: absolute;
+            bottom: 30px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 14px;
+            box-shadow: 0 0 40px rgba(255, 115, 0, 0.5);
+            border: 1px solid rgba(255, 115, 0, 0.4);
+            z-index: 1000;
+            max-width: 280px;
+            color: white;
+        }
+
+        #legend h3 {
+            margin-bottom: 10px;
+            color: #ff6a00;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .marker-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .marker-dot.red {
+            background: #ff3c00;
+        }
+
+        .marker-dot.orange {
+            background: #ff8800;
+        }
+
+        .marker-dot.green {
+            background: #22c55e;
+        }
+
+        .marker-dot.blue {
+            background: #00aaff;
+        }
+
+        .stats {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 115, 0, 0.3);
+            font-size: 13px;
+            color: #ffcc99;
+        }
+
+        #refresh-btn {
+            position: absolute;
+            top: 22px;
+            right: 25px;
+            background: linear-gradient(135deg, #ff6a00, #ff3c00);
+            color: white;
+            border: none;
+            padding: 7px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 0 25px rgba(255, 115, 0, 0.8);
+        }
+
+        #refresh-btn:hover {
+            box-shadow: 0 0 40px rgba(255, 115, 0, 1);
+        }
+
+        #stats-banner {
+            position: absolute;
+            top: 95px;
+            left: 25px;
+            background: linear-gradient(135deg, #ff6a00, #ff3c00);
+            padding: 9px 18px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 0 25px rgba(255, 115, 0, 0.9);
+            z-index: 1000;
+        }
+
+        #user-location-btn {
+            position: absolute;
+            bottom: 30px;
+            left: 20px;
+            background: linear-gradient(135deg, #ff6a00, #ff3c00);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 0 25px rgba(255, 115, 0, 0.8);
+            z-index: 1000;
+        }
+
+        #user-location-btn:hover {
+            box-shadow: 0 0 40px rgba(255, 115, 0, 1);
+        }
+
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            color: #ff6a00;
+            padding: 20px 40px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 115, 0, 0.6);
+            box-shadow: 0 0 35px rgba(255, 115, 0, 0.9);
+            display: none;
+            z-index: 2000;
+        }
+
+        .popup-content {
+            font-size: 14px;
+            min-width: 250px;
+            max-height: 300px;
+            overflow-y: auto;
+            color: #000;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="header">
+        <div class="nav-links">
+            <a href="outbreak-checker.html" class="nav-link">📋 Checker</a>
+            <a href="outbreak-map.html" class="nav-link">🗺️ Map</a>
+            <a href="dashboard.html" class="nav-link">🏠 Dashboard</a>
+        </div>
+        <h1>🔐 NEURO VITALS - Admin Dashboard</h1>
+        <p>Real-time patient tracking & outbreak monitoring (admin view)</p>
+        <button id="refresh-btn" onclick="loadAdminData()">🔄 Refresh</button>
+    </div>
+
+    <div id="stats-banner">Loading stats...</div>
+    <div id="map"></div>
+    <button id="user-location-btn" onclick="centerOnUser()">📍 My Location</button>
+
+    <div id="legend">
+        <h3>📊 Admin Legend</h3>
+        <div class="legend-item">
+            <div class="marker-dot red"></div>Flu-like (Spreadable)
+        </div>
+        <div class="legend-item">
+            <div class="marker-dot orange"></div>Other Spreadable
+        </div>
+        <div class="legend-item">
+            <div class="marker-dot green"></div>Non-Spreadable
+        </div>
+        <div class="legend-item">
+            <div class="marker-dot blue"></div>Your Location
+        </div>
+        <div class="stats" id="legend-stats">Loading...</div>
+    </div>
+
+    <div id="loading">⏳ Loading patient data...</div>
+
+    <script>
+        const BACKEND_URL = "http://127.0.0.1:8000/api/outbreak";
+        let map = L.map('map').setView([20.5937, 78.9629], 5);
+        let markers = [];
+        let userMarker = null;
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        function centerOnUser() {
+            if (!navigator.geolocation) return;
+            navigator.geolocation.getCurrentPosition(pos => {
+                const { latitude: lat, longitude: lng } = pos.coords;
+                if (userMarker) map.removeLayer(userMarker);
+                userMarker = L.circleMarker([lat, lng], { color: '#00aaff', radius: 10, fillOpacity: 0.9 })
+                    .addTo(map).bindPopup("📍 Your Location").openPopup();
+                map.setView([lat, lng], 10);
+            });
+        }
+
+        async function loadAdminData() {
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/admin`);
+                const data = await response.json();
+
+                // Clear old markers
+                markers.forEach(m => map.removeLayer(m));
+                markers = [];
+
+                const stats = data.stats || {};
+                document.getElementById('stats-banner').textContent =
+                    `📊 Total: ${stats.total || 0} | 🔴 Spreadable: ${stats.spreadable || 0} | 🟢 Non-Spreadable: ${stats.non_spreadable || 0}`;
+
+                let fluCount = 0, otherCount = 0, nonSpreadCount = 0;
+
+                if (data.patients && data.patients.length > 0) {
+                    data.patients.forEach(patient => {
+                        const lat = parseFloat(patient.latitude);
+                        const lng = parseFloat(patient.longitude);
+                        if (isNaN(lat) || isNaN(lng)) return;
+
+                        let color, label;
+                        if (patient.disease_category === 'flu_like') {
+                            color = '#ff3c00'; label = '🔴 Flu-like'; fluCount++;
+                        } else if (patient.spreadable) {
+                            color = '#ff8800'; label = '🟠 Other Spreadable'; otherCount++;
+                        } else {
+                            color = '#22c55e'; label = '🟢 Non-Spreadable'; nonSpreadCount++;
+                        }
+
+                        const rec = patient.records || {};
+                        const marker = L.circleMarker([lat, lng], {
+                            radius: 8, fillColor: color, color: '#fff', weight: 2, fillOpacity: 0.85
+                        }).addTo(map);
+
+                        marker.bindPopup(`
+                    <div class="popup-content">
+                        <b style="color:${color};">${label}</b><br>
+                        <b>Patient:</b> ${rec.name || 'N/A'} (Age: ${rec.age || '?'})<br>
+                        <b>Symptoms:</b> ${rec.symptoms || 'N/A'}<br>
+                        <b>Severity:</b> ${rec.severity || '?'}/10<br>
+                        <b>Location:</b> ${patient.location_city || '?'}, ${patient.location_region || '?'}<br>
+                        <b>Type:</b> ${patient.disease_type || 'unknown'}<br>
+                        <small>${new Date(patient.created_at).toLocaleString()}</small>
+                    </div>
+                `);
+
+                        markers.push(marker);
+                    });
+                }
+
+                document.getElementById('legend-stats').innerHTML =
+                    `🔴 Flu: ${fluCount}<br>🟠 Other: ${otherCount}<br>🟢 Non-Spread: ${nonSpreadCount}<br><b>Total: ${stats.total || 0}</b>`;
+
+            } catch (err) {
+                console.error('Admin load error:', err);
+                document.getElementById('stats-banner').textContent = '❌ Error loading data';
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        // Load on page open
+        loadAdminData();
+    </script>
+
+</body>
+
+</html>
