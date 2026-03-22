@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Neuro-Vitals | Diagnosis Battle Arena</title>
+    <title>Neuro-Vitals | Debatable AI: Conflict Resolution</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&family=Poppins:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap"
@@ -12,6 +12,11 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
         rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/vitals-streamer.js"></script>
+    <script src="js/utils.js"></script>
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -114,7 +119,7 @@
         </button>
     </div>
 
-    <!-- Sidebar (Consistent with Dashboard) -->
+    <!-- Sidebar -->
     <aside id="sidebar"
         class="fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 w-64 md:w-20 lg:w-64 bg-background-dark/95 border-r border-white/5 z-40 transition-transform duration-300 flex flex-col pt-16 md:pt-0">
         <div class="p-6 flex items-center gap-3">
@@ -126,59 +131,36 @@
 
         <nav class="flex-1 px-3 space-y-1">
             <a href="dashboard.html"
-                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
+                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors" title="Main Dashboard Overview">
                 <span class="material-symbols-rounded">grid_view</span>
                 <span class="md:hidden lg:block text-sm">Dashboard</span>
             </a>
             <a href="symptom-analysis.html"
-                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
+                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors" title="Symptoms Analysis: Analyze Symptoms">
                 <span class="material-symbols-rounded">health_metrics</span>
-                <span class="md:hidden lg:block text-sm">Analysis</span>
+                <span class="md:hidden lg:block text-sm">Symptoms Analysis</span>
             </a>
             <a href="adversarial-diagnosis.html"
-                class="flex items-center gap-3 px-3 py-3 rounded-xl bg-primary/10 text-primary border border-primary/20 font-medium transition-colors">
+                class="flex items-center gap-3 px-3 py-3 rounded-xl bg-primary/10 text-primary border border-primary/20 font-medium transition-colors" title="Debatable AI: Challenge Diagnosis">
                 <span class="material-symbols-rounded">swords</span>
-                <span class="md:hidden lg:block text-sm">Diagnosis Arena</span>
+                <span class="md:hidden lg:block text-sm">Debatable AI</span>
             </a>
-            <a href="health-trajectory.html"
-                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
-                <span class="material-symbols-rounded">monitoring</span>
-                <span class="md:hidden lg:block text-sm">Trends</span>
-            </a>
-            <a href="risk-engine.html"
-                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
+            <a href="integrations.html"
+                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors" title="Neural Bio-Sensor: Connect Wearables">
                 <span class="material-symbols-rounded">vital_signs</span>
-                <span class="md:hidden lg:block text-sm">Risk Engine</span>
-            </a>
-            <a href="outbreak-checker.html"
-                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
-                <span class="material-symbols-rounded">coronavirus</span>
-                <span class="md:hidden lg:block text-sm">Outbreak</span>
+                <span class="md:hidden lg:block text-sm">Neural Bio-Sensor</span>
             </a>
             <a href="community-health.html"
-                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
+                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors" title="Community Health: Outbreak Map">
                 <span class="material-symbols-rounded">groups</span>
                 <span class="md:hidden lg:block text-sm">Community</span>
             </a>
-            <a href="integrations.html"
-                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
-                <span class="material-symbols-rounded">devices_wearables</span>
-                <span class="md:hidden lg:block text-sm">Integrations</span>
-            </a>
-            <a href="#" onclick="alert('Medication Schedule')"
-                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
-                <span class="material-symbols-rounded">medication</span>
-                <span class="md:hidden lg:block text-sm">Meds</span>
+            <a href="future-risk.html"
+                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors" title="Neuro-Forecast: AI Risk Prediction">
+                <span class="material-symbols-rounded">psychology</span>
+                <span class="md:hidden lg:block text-sm">Neuro-Forecast</span>
             </a>
         </nav>
-
-        <div class="p-4 border-t border-white/5">
-            <button onclick="handleSignOut()"
-                class="flex items-center gap-3 w-full px-3 py-2 rounded-xl text-slate-400 hover:text-neuro-red hover:bg-neuro-red/10 transition-colors">
-                <span class="material-symbols-rounded">logout</span>
-                <span class="md:hidden lg:block text-sm font-medium">Sign Out</span>
-            </button>
-        </div>
     </aside>
 
     <!-- Main Content Arena -->
@@ -188,9 +170,8 @@
             class="hidden md:flex h-20 items-center justify-between border-b border-white/10 bg-background-dark/40 px-8 backdrop-blur-md z-10 sticky top-0">
             <div class="flex items-center gap-6">
                 <div class="flex flex-col">
-                    <span class="text-xs font-bold uppercase tracking-widest text-white/40">Active Battle
-                        Arena</span>
-                    <h1 class="text-xl font-bold text-white">Case #882-X: Demyelinating Conflict</h1>
+                    <span class="text-xs font-bold uppercase tracking-widest text-white/40">Symptoms Conflict Resolution</span>
+                    <h1 class="text-xl font-bold text-white">Debatable AI: Diagnosis Arena</h1>
                 </div>
                 <div class="h-8 w-[1px] bg-white/10"></div>
                 <div class="flex items-center gap-2 rounded-full bg-white/5 px-4 py-1.5 border border-white/10">
@@ -219,8 +200,11 @@
             <div class="mx-auto w-full max-w-4xl mb-8">
                 <div class="glass-card rounded-2xl p-6 border border-white/10">
                     <div class="flex items-center gap-3 mb-4">
-                        <span class="material-symbols-rounded text-primary">clinical_notes</span>
-                        <h3 class="text-lg font-bold text-white uppercase tracking-wider">Initialize Medical Case</h3>
+                        <span class="material-symbols-rounded text-primary">psychology_alt</span>
+                        <div>
+                            <h3 class="text-lg font-bold text-white uppercase tracking-wider">Are your symptoms framing the wrong disease?</h3>
+                            <p class="text-sm text-slate-400">Let our Debatable AI cross-examine every variable to uncover truth.</p>
+                        </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
                         <div class="md:col-span-2">
@@ -273,12 +257,23 @@
                         </div>
                         <div class="h-1 w-24 bg-primary mb-6 rounded-full"></div>
                         <p class="text-base md:text-lg font-medium text-slate-300 leading-relaxed max-w-2xl">
-                            <span id="judgeSummary">The Judge will synthesize the arguments and provide a final verdict
-                                here.</span>
-                            <br /><span id="judgeConfidence" class="text-white font-bold block mt-2 text-xl"></span>
+                            <span id="judgeSummary">The Judge will synthesize the arguments and provide a final verdict here.</span>
                         </p>
+                        
+                        <!-- Highlights Section -->
+                        <div id="judgeHighlightsContainer" class="hidden w-full max-w-2xl mt-6">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="material-symbols-rounded text-primary text-sm">auto_awesome</span>
+                                <span class="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">Quick Highlights</span>
+                            </div>
+                            <div id="judgeHighlights" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <!-- Dynamic Highlights -->
+                            </div>
+                        </div>
+
+                        <span id="judgeConfidence" class="text-white font-bold block mt-4 text-xl"></span>
                         <div class="mt-8 flex flex-col md:flex-row gap-4 w-full md:w-auto">
-                            <button id="acceptVerdictBtn" onclick="alert('Verdict Accepted. Updating EHR...')"
+                            <button id="acceptVerdictBtn"
                                 class="rounded-xl bg-primary px-8 py-3 font-bold text-white hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20 w-full md:w-auto opacity-50 cursor-not-allowed"
                                 disabled>Accept
                                 Verdict</button>
@@ -396,7 +391,110 @@
         </div>
     </main>
 
-    <script src="js/api.js"></script>
+    <script>
+        /**
+         * Neuro-Vitals API Layer (Inlined to prevent 404 errors)
+         */
+        const BACKEND_URL = "http://localhost:8000/api";
+
+        async function analyzeSymptoms(data) {
+            try {
+                const formData = new FormData();
+                formData.append("name", data.name || "Anonymous");
+                formData.append("age", data.age);
+                formData.append("gender", data.gender);
+                formData.append("symptoms", data.symptoms);
+                formData.append("severity", data.severity);
+                formData.append("duration", data.duration || 1);
+                
+                const response = await fetch(`${BACKEND_URL}/outbreak/analyze`, {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error(`Backend Error: ${response.status}`);
+                const result = await response.json();
+                return { analysis: result.analysis, success: true };
+            } catch (error) {
+                console.error("Analyze Error:", error);
+                return { analysis: "AI service error. Please ensure the backend is running.", success: false };
+            }
+        }
+
+        async function generateAdversarialDebate(data) {
+            try {
+                const patientProfile = {
+                    name: data.name || "Patient",
+                    age: parseInt(data.age),
+                    gender: data.gender,
+                    symptoms: data.symptoms,
+                    medical_history: data.history ? [data.history] : [],
+                    severity: parseInt(data.severity) || 5,
+                    duration: parseInt(data.duration) || 1
+                };
+
+                // Add stored location
+                const storedLoc = JSON.parse(localStorage.getItem('neurovitals_location') || '{}');
+                if (storedLoc.latitude) {
+                    patientProfile.latitude = storedLoc.latitude;
+                    patientProfile.longitude = storedLoc.longitude;
+                    patientProfile.location_city = storedLoc.location_city;
+                    patientProfile.location_country = storedLoc.location_country;
+                }
+
+                const response = await fetch(`${BACKEND_URL}/adversarial/debate`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(patientProfile)
+                });
+
+                if (!response.ok) throw new Error(`Backend Error: ${response.status}`);
+                const result = await response.json();
+                window._lastDebateResult = result;
+
+                return {
+                    prosecutor: {
+                        diagnosis: result.prosecutor.diagnosis,
+                        confidence: result.prosecutor.confidence,
+                        points: result.prosecutor.points.map(p => ({ title: p.title, description: p.description }))
+                    },
+                    defense: {
+                        diagnosis: result.defense.diagnosis,
+                        confidence: result.defense.confidence,
+                        points: result.defense.points.map(p => ({ title: p.title, description: p.description }))
+                    }
+                };
+            } catch (error) {
+                console.error("Adversarial Error:", error);
+                throw error;
+            }
+        }
+
+        async function generateJudgeVerdict(data, prosecutor, defense) {
+            if (window._lastDebateResult) {
+                const result = window._lastDebateResult.verdict;
+                return {
+                    verdict: result.verdict,
+                    confidence: result.confidence,
+                    highlights: result.highlights || [],
+                    synthesis: result.synthesis,
+                    next_step: result.next_step
+                };
+            }
+            return {
+                verdict: "Verdict Unavailable",
+                confidence: 0,
+                synthesis: "The Judge could not reach a verdict due to connection issues.",
+                next_step: "Consult a human specialist."
+            };
+        }
+
+        window.neuroApi = {
+            analyzeSymptoms,
+            generateAdversarialDebate,
+            generateJudgeVerdict
+        };
+    </script>
     <script>
         // Check authentication
         const currentUser = JSON.parse(localStorage.getItem('neurovitals_currentUser'));
@@ -502,6 +600,24 @@
                 document.getElementById('judgeSummary').innerHTML = judgeResult.synthesis;
                 document.getElementById('judgeConfidence').innerText = `${judgeResult.confidence}% Confidence`;
 
+                // Handle Highlights
+                const highlightsContainer = document.getElementById('judgeHighlightsContainer');
+                const highlightsList = document.getElementById('judgeHighlights');
+                highlightsList.innerHTML = '';
+                
+                if (judgeResult.highlights && judgeResult.highlights.length > 0) {
+                    highlightsContainer.classList.remove('hidden');
+                    judgeResult.highlights.forEach(h => {
+                        highlightsList.innerHTML += `
+                            <div class="bg-white/5 border border-white/10 rounded-xl p-3 text-left">
+                                <p class="text-[11px] leading-tight text-white/80">${h}</p>
+                            </div>
+                        `;
+                    });
+                } else {
+                    highlightsContainer.classList.add('hidden');
+                }
+
                 // Enable Buttons
                 const acceptBtn = document.getElementById('acceptVerdictBtn');
                 const testBtn = document.getElementById('orderTestBtn');
@@ -515,6 +631,29 @@
 
                 status.innerText = "SIMULATION COMPLETE";
 
+                // --- PERSIST TO SUPABASE (Records Table) ---
+                if (currentUser && currentUser.id) {
+                    try {
+                        await window.supabaseClient.from('records').insert({
+                            user_id: currentUser.id,
+                            record_type: 'adversarial_debate',
+                            diagnosis: judgeResult.verdict,
+                            confidence_score: judgeResult.confidence,
+                            report_data: {
+                                symptoms: patientCase.symptoms,
+                                age: patientCase.age,
+                                gender: patientCase.gender,
+                                prosecutor: result.prosecutor,
+                                defense: result.defense,
+                                verdict_synthesis: judgeResult.synthesis,
+                                next_step: judgeResult.next_step
+                            }
+                        });
+                    } catch (dbErr) {
+                        console.warn("Adversarial record persistence failed.", dbErr);
+                    }
+                }
+
             } catch (error) {
                 console.error(error);
                 alert("AI Simulation Error. Please try again.");
@@ -523,6 +662,99 @@
                 status.classList.remove("animate-pulse");
                 btn.disabled = false;
                 btn.innerHTML = `<span class="material-symbols-rounded">play_arrow</span> Start Simulation`;
+            }
+        });
+
+        // Accept Verdict Sync
+        document.getElementById('acceptVerdictBtn').addEventListener('click', async () => {
+            const adminNodeId = localStorage.getItem('current_admin_node_id');
+            const verdict = document.getElementById('judgeVerdictTitle').innerText;
+            
+            if (adminNodeId && verdict) {
+                const btn = document.getElementById('acceptVerdictBtn');
+                btn.disabled = true;
+                btn.innerHTML = `<span class="material-symbols-rounded animate-spin">refresh</span> Syncing...`;
+                
+                const { error } = await window.updateAdminSymptoms(adminNodeId, `VERIFIED: ${verdict}`);
+                
+                if (!error) {
+                    showToast("Verdict Synchronized to Community Map", "success");
+                    btn.innerHTML = `<span class="material-symbols-rounded">check</span> Synchronized`;
+                    btn.classList.add('bg-green-600');
+                } else {
+                    showToast("Sync Error", "error");
+                    btn.innerText = "Retry Sync";
+                    btn.disabled = false;
+                }
+            } else {
+                alert("Verdict Accepted.");
+            }
+        });
+
+        // Initialize Session and check for pending verification (localStorage or URL params)
+        window.addEventListener('load', () => {
+            // Check auth
+            const currentUser = JSON.parse(localStorage.getItem('neurovitals_currentUser'));
+            if (!currentUser) window.location.href = 'index.html';
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const pendingParams = {
+                age: urlParams.get('age'),
+                gender: urlParams.get('gender'),
+                symptoms: urlParams.get('symptoms'),
+                autoStart: urlParams.get('autoStart') === 'true'
+            };
+
+            const pendingLocal = JSON.parse(localStorage.getItem('pending_verification') || '{}');
+            
+            // Combine data (Params take precedence for easy sharing/linking)
+            const data = {
+                age: pendingParams.age || pendingLocal.age,
+                gender: pendingParams.gender || pendingLocal.gender,
+                symptoms: pendingParams.symptoms || pendingLocal.symptoms,
+                autoStart: pendingParams.autoStart || pendingLocal.autoStart
+            };
+
+            if (data.age || data.gender || data.symptoms) {
+                try {
+                    // Fill profile with retry/safety for selects
+                    const setVal = (id, val) => {
+                        const el = document.getElementById(id);
+                        if (!el) return;
+                        el.value = val;
+                        // Fire change event to ensure any listeners pick it up
+                        el.dispatchEvent(new Event('change'));
+                    };
+
+                    setTimeout(() => {
+                        if (data.age) setVal('caseAge', data.age);
+                        if (data.gender) setVal('caseGender', data.gender);
+                        if (data.symptoms) setVal('caseSymptoms', data.symptoms);
+                        
+                        // Auto-start if requested (with retry)
+                        if (data.autoStart) {
+                            let attempts = 0;
+                            const tryStart = setInterval(() => {
+                                const battleBtn = document.getElementById('startBattleBtn');
+                                if (battleBtn && !battleBtn.disabled) {
+                                    battleBtn.classList.add('animate-pulse', 'ring-4', 'ring-primary');
+                                    battleBtn.click();
+                                    clearInterval(tryStart);
+                                }
+                                if (++attempts > 10) clearInterval(tryStart);
+                            }, 500);
+                        }
+                    }, 500);
+                    
+                    // Clear both to avoid re-triggering
+                    localStorage.removeItem('pending_verification');
+                    // Optional: Clean URL
+                    if (window.location.search) {
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }
+                } catch (e) {
+                    console.error("Verification bridge error:", e);
+                }
             }
         });
     </script>

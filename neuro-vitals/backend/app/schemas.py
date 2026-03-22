@@ -2,7 +2,7 @@
 Pydantic schemas for API requests and responses
 """
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Any, Union
 from datetime import datetime
 from enum import Enum
 
@@ -17,12 +17,19 @@ class SymptomInput(BaseModel):
 
 class PatientProfile(BaseModel):
     """Complete patient profile"""
-    patient_id: str
+    patient_id: Optional[str] = "P-123" # Default or optional
+    name: Optional[str] = "Patient"
     age: int
     gender: str
-    symptoms: List[SymptomInput]
+    symptoms: Union[List[SymptomInput], str] # Support both structured and plain text
     medical_history: Optional[List[str]] = Field(default_factory=list)
     current_medications: Optional[List[str]] = Field(default_factory=list)
+    severity: Optional[int] = 5
+    duration: Optional[int] = 1
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    location_city: Optional[str] = None
+    location_country: Optional[str] = None
 
 
 class DiagnosisResult(BaseModel):

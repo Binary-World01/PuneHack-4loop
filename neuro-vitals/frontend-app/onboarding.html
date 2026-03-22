@@ -6,6 +6,9 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Onboarding | Neuro-Vitals</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/utils.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet" />
     <link
@@ -68,12 +71,17 @@
             display: block;
             animation: fadeSlide 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
-
-        /* Premium Input Styling */
-        .premium-input {
-            position: relative;
-        }
-
+    </style>
+    <script>
+        // Initialize multi-step form
+        window.addEventListener('load', async () => {
+            // Trigger location capture if not already done
+            await captureAndSaveLocation();
+            
+            showStep(currentStep);
+        });
+    </script>
+    <style>
         .premium-input input,
         .premium-input select,
         .premium-input textarea {
@@ -493,46 +501,74 @@
             }
         }
 
-        function completeOnboarding() {
-            // Collect all data
-            const contactEntries = document.querySelectorAll('.contact-entry');
-            const emergencyContacts = Array.from(contactEntries).map(entry => ({
-                name: entry.querySelector('.emergencyName').value,
-                relationship: entry.querySelector('.emergencyRelationship').value,
-                phone: entry.querySelector('.emergencyPhone').value
-            }));
+        async function completeOnboarding() {
+            const currentUser = JSON.parse(localStorage.getItem('neurovitals_currentUser'));
+            if (!currentUser) {
+                window.location.href = 'index.html';
+                return;
+            }
 
+            const email = currentUser.email;
+
+            // Collect all data
             const onboardingData = {
-                name: document.getElementById('name').value,
-                age: document.getElementById('age').value,
+                user_email: email,
+                age: parseInt(document.getElementById('age').value) || null,
                 gender: document.getElementById('gender').value,
-                phone: document.getElementById('phone').value,
-                bloodType: document.getElementById('bloodType').value,
-                conditions: document.getElementById('conditions').value,
+                phonenumber: document.getElementById('phone').value,
+                bloodtype: document.getElementById('bloodType').value,
+                chronic_conditions: document.getElementById('conditions').value,
                 medications: document.getElementById('medications').value,
                 supplements: document.getElementById('supplements').value,
-                drugAllergies: document.getElementById('drugAllergies').value,
-                foodAllergies: document.getElementById('foodAllergies').value,
-                emergencyContacts: emergencyContacts
+                drug_allergies: document.getElementById('drugAllergies').value,
+                food_allergies: document.getElementById('foodAllergies').value,
+                updated_at: new Date().toISOString()
             };
 
-            // Get current user and update their data
-            const currentUser = JSON.parse(localStorage.getItem('neurovitals_currentUser'));
-            if (currentUser) {
-                currentUser.onboardingData = onboardingData;
+            try {
+                // 1. Update Profile (using email)
+                await upsertUserProfile({
+                    email: email,
+                    age: onboardingData.age,
+                    gender: onboardingData.gender
+                });
+
+                // 2. Save Medical Form (Flattened columns)
+                const { data: formResult, error: formError } = await window.supabaseClient
+                    .from('medical_forms')
+                    .insert(onboardingData)
+                    .select('formid')
+                    .single();
+
+                if (formError) throw formError;
+
+                const formId = formResult.formid;
+
+                // 3. Save Emergency Contacts (linked to formId)
+                const contactEntries = document.querySelectorAll('.contact-entry');
+                const emergencyContacts = Array.from(contactEntries).map(entry => ({
+                    form_id: formId,
+                    contact_name: entry.querySelector('.emergencyName').value,
+                    relationship: entry.querySelector('.emergencyRelationship').value,
+                    e_phonenumber: entry.querySelector('.emergencyPhone').value
+                })).filter(c => c.contact_name && c.e_phonenumber);
+
+                if (emergencyContacts.length > 0) {
+                    const { error: contactError } = await window.supabaseClient
+                        .from('emergency_contacts')
+                        .insert(emergencyContacts);
+                    if (contactError) console.error("Error saving contacts:", contactError);
+                }
+
+                // 4. Update Local Storage
                 currentUser.onboardingComplete = true;
                 localStorage.setItem('neurovitals_currentUser', JSON.stringify(currentUser));
 
-                // Update in users array
-                const users = JSON.parse(localStorage.getItem('neurovitals_users')) || [];
-                const userIndex = users.findIndex(u => u.email === currentUser.email);
-                if (userIndex !== -1) {
-                    users[userIndex] = currentUser;
-                    localStorage.setItem('neurovitals_users', JSON.stringify(users));
-                }
+                window.location.href = 'dashboard.html';
+            } catch (err) {
+                console.error("Onboarding error:", err);
+                alert("An error occurred during onboarding. Please try again: " + err.message);
             }
-
-            window.location.href = 'dashboard.html';
         }
 
         // Initialize

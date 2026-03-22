@@ -17,8 +17,9 @@ class DiseaseClassifier:
         "runny nose", "congestion", "sinus infection", "flu-like",
     ]
 
-    # Other spreadable diseases – ORANGE on map
+    # Other spreadable (Tropical/Vector-borne) – ORANGE on map
     OTHER_SPREADABLE = [
+        "dengue", "malaria", "typhoid", "cholera", "zika", "chikungunya",
         "strep throat", "staphylococcus", "e. coli", "salmonella",
         "hepatitis", "tuberculosis", "measles", "chickenpox",
         "meningitis", "conjunctivitis", "pink eye", "norovirus",
@@ -26,25 +27,46 @@ class DiseaseClassifier:
         "stomach flu", "gastroenteritis", "food poisoning",
     ]
 
-    # Non-spreadable conditions – NOT shown on map
+    # Non-spreadable conditions – GREEN on map
     NON_SPREADABLE = [
-        "allergy", "allergies", "migraine", "headache", "asthma",
+        "anxiety", "migraine", "headache", "asthma", "allergy", "allergies",
         "diabetes", "hypertension", "arthritis", "back pain",
-        "anxiety", "depression", "insomnia", "constipation",
+        "depression", "insomnia", "constipation",
         "indigestion", "acidity", "dehydration", "fatigue",
         "acne", "skin roughness", "dryness", "swelling", "eczema",
         "psoriasis", "dermatitis", "hair loss", "dandruff",
     ]
 
+    # Specific Precautions Map
+    PRECAUTIONS_MAP = {
+        # Flu-like
+        "dengue": "Avoid stagnant water, use mosquito nets, and monitor platelet counts.",
+        "malaria": "Use mosquito repellents, sleep under nets, and start antimalarials if prescribed.",
+        "covid": "Isolate, wear N95 mask, and monitor blood oxygen levels.",
+        "influenza": "Rest, hydrate, and avoid contact with elderly or infants.",
+        "flu": "Rest, hydrate, and avoid contact with elderly or infants.",
+        "pneumonia": "Deep breathing exercises, stay warm, and follow antibiotic course strictly.",
+        "typhoid": "Drink boiled water, avoid raw food, and maintain strict hand hygiene.",
+        "cholera": "ORS rehydration, boiled water, and immediate clinical consultation.",
+        # Common symptoms
+        "fever": "Monitor temperature hourly and stay hydrated.",
+        "cough": "Warm fluids and avoid cold drinks.",
+        # Default category precautions
+        "flu_like": "Practice social distancing, wear masks, and sanitize frequently.",
+        "other_spreadable": "Wash hands with soap, avoid sharing personal items, and follow local health advisories.",
+        "non_spreadable": "Monitor symptoms and consult a professional if they persist.",
+    }
+
     @classmethod
     def classify_disease(cls, ai_response: str | None) -> dict:
-        """Return category, spreadable flag, marker colour, and disease type."""
+        """Return category, spreadable flag, marker colour, specific disease type, and precautions."""
         if not ai_response:
             return {
                 "category": "unknown",
                 "spreadable": False,
                 "marker_color": "gray",
                 "disease_type": "unknown",
+                "precautions": "No data for assessment."
             }
 
         lower = ai_response.lower()
@@ -55,7 +77,8 @@ class DiseaseClassifier:
                     "category": "flu_like",
                     "spreadable": True,
                     "marker_color": "red",
-                    "disease_type": "flu-like spreadable",
+                    "disease_type": disease,
+                    "precautions": cls.PRECAUTIONS_MAP.get(disease, cls.PRECAUTIONS_MAP["flu_like"])
                 }
 
         for disease in cls.OTHER_SPREADABLE:
@@ -64,7 +87,8 @@ class DiseaseClassifier:
                     "category": "other_spreadable",
                     "spreadable": True,
                     "marker_color": "orange",
-                    "disease_type": "other spreadable",
+                    "disease_type": disease,
+                    "precautions": cls.PRECAUTIONS_MAP.get(disease, cls.PRECAUTIONS_MAP["other_spreadable"])
                 }
 
         for condition in cls.NON_SPREADABLE:
@@ -73,12 +97,14 @@ class DiseaseClassifier:
                     "category": "non_spreadable",
                     "spreadable": False,
                     "marker_color": "green",
-                    "disease_type": "non-spreadable",
+                    "disease_type": condition,
+                    "precautions": cls.PRECAUTIONS_MAP.get(condition, cls.PRECAUTIONS_MAP["non_spreadable"])
                 }
 
         return {
             "category": "unknown",
             "spreadable": False,
             "marker_color": "gray",
-            "disease_type": "unknown",
+            "disease_type": "generic condition",
+            "precautions": cls.PRECAUTIONS_MAP["non_spreadable"]
         }

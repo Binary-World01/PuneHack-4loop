@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Neuro-Vitals | Device Integrations Hub</title>
+    <title>Neuro-Vitals | Neural Bio-Sensor: Device Integrations</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&family=Outfit:wght@500;600;700;800&family=Fira+Code:wght@400;500&display=swap"
@@ -15,6 +15,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/utils.js"></script>
     <script src="js/supabase-config.js"></script>
+    <script src="js/vitals-streamer.js"></script>
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -99,7 +100,7 @@
         }
 
         ::-webkit-scrollbar-track {
-            bg: transparent;
+            background: transparent;
         }
 
         ::-webkit-scrollbar-thumb {
@@ -146,77 +147,54 @@
     </style>
 </head>
 
-<body class="flex">
+<body class="flex overflow-hidden">
 
-    <!-- Sidebar (Keeping consistent) -->
+    <!-- Sidebar -->
     <aside id="sidebar"
-        class="fixed inset-y-0 left-0 w-20 lg:w-64 bg-black/90 backdrop-blur-xl border-r border-white/5 z-50 flex flex-col transition-all duration-300">
-        <div class="h-20 flex items-center justify-center lg:justify-start lg:px-6 border-b border-white/5">
-            <div
-                class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white shadow-lg shadow-primary/30">
+        class="fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 w-64 md:w-20 lg:w-64 bg-background-dark/95 border-r border-white/5 z-40 transition-transform duration-300 flex flex-col pt-16 md:pt-0">
+        <div class="p-6 flex items-center gap-3">
+            <div class="w-8 h-8 rounded-xl bg-primary/20 flex items-center justify-center text-primary shadow-glow">
                 <span class="material-symbols-rounded">neurology</span>
             </div>
-            <span class="ml-3 font-display font-bold text-xl tracking-tight hidden lg:block">Neuro-Vitals</span>
+            <span class="font-bold text-lg md:hidden lg:block">Neuro-Vitals</span>
         </div>
 
-        <nav class="flex-1 py-6 px-3 space-y-2">
+        <nav class="flex-1 px-3 space-y-1">
             <a href="dashboard.html"
-                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all group">
-                <span class="material-symbols-rounded group-hover:scale-110 transition-transform">grid_view</span>
-                <span class="hidden lg:block font-medium">Dashboard</span>
+                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors" title="Main Dashboard Overview">
+                <span class="material-symbols-rounded">grid_view</span>
+                <span class="md:hidden lg:block text-sm">Dashboard</span>
             </a>
             <a href="symptom-analysis.html"
-                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all group">
-                <span class="material-symbols-rounded group-hover:scale-110 transition-transform">health_metrics</span>
-                <span class="hidden lg:block font-medium">Analysis</span>
+                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors" title="Symptoms Analysis: Analyze Symptoms">
+                <span class="material-symbols-rounded">health_metrics</span>
+                <span class="md:hidden lg:block text-sm">Symptoms Analysis</span>
             </a>
             <a href="adversarial-diagnosis.html"
-                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all group">
-                <span class="material-symbols-rounded group-hover:scale-110 transition-transform">swords</span>
-                <span class="hidden lg:block font-medium">Diagnosis Arena</span>
-            </a>
-            <a href="health-trajectory.html"
-                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all group">
-                <span class="material-symbols-rounded group-hover:scale-110 transition-transform">monitoring</span>
-                <span class="hidden lg:block font-medium">Trends</span>
+                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors" title="Debatable AI: Challenge Diagnosis">
+                <span class="material-symbols-rounded">swords</span>
+                <span class="md:hidden lg:block text-sm">Debatable AI</span>
             </a>
             <a href="integrations.html"
-                class="flex items-center gap-3 px-3 py-3 rounded-xl bg-primary/10 text-primary border border-primary/20 shadow-lg shadow-primary/5">
-                <span class="material-symbols-rounded animate-pulse">devices_wearables</span>
-                <span class="hidden lg:block font-bold">Integrations Hub</span>
-            </a>
-            <a href="risk-engine.html"
-                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all group">
-                <span class="material-symbols-rounded group-hover:scale-110 transition-transform">vital_signs</span>
-                <span class="hidden lg:block font-medium">Risk Engine</span>
-            </a>
-            <a href="outbreak-checker.html"
-                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all group">
-                <span class="material-symbols-rounded group-hover:scale-110 transition-transform">coronavirus</span>
-                <span class="hidden lg:block font-medium">Outbreak</span>
+                class="flex items-center gap-3 px-3 py-3 rounded-xl bg-primary/10 text-primary border border-primary/20 font-medium transition-colors" title="Neural Bio-Sensor: Connect Wearables">
+                <span class="material-symbols-rounded">vital_signs</span>
+                <span class="md:hidden lg:block text-sm">Neural Bio-Sensor</span>
             </a>
             <a href="community-health.html"
-                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all group">
-                <span class="material-symbols-rounded group-hover:scale-110 transition-transform">groups</span>
-                <span class="hidden lg:block font-medium">Community</span>
+                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors" title="Community Health: Outbreak Map">
+                <span class="material-symbols-rounded">groups</span>
+                <span class="md:hidden lg:block text-sm">Community</span>
+            </a>
+            <a href="future-risk.html"
+                class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors" title="Neuro-Forecast: AI Risk Prediction">
+                <span class="material-symbols-rounded">psychology</span>
+                <span class="md:hidden lg:block text-sm">Neuro-Forecast</span>
             </a>
         </nav>
-
-        <div class="p-4 border-t border-white/5">
-            <div class="flex items-center gap-3 px-3 py-3">
-                <div
-                    class="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center font-bold text-xs ring-2 ring-white/10">
-                    JD</div>
-                <div class="hidden lg:block">
-                    <p class="text-sm font-bold">Dr. John Doe</p>
-                    <p class="text-xs text-slate-500">Neurologist</p>
-                </div>
-            </div>
-        </div>
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 ml-20 lg:ml-64 relative min-h-screen bg-bg-dark">
+    <main class="flex-1 h-screen overflow-y-auto relative bg-bg-dark">
         <!-- Background Grid FX -->
         <div class="absolute inset-0 bg-grid-pattern bg-grid opacity-20 pointer-events-none"></div>
         <div
@@ -230,9 +208,8 @@
         <header
             class="sticky top-0 z-40 bg-bg-dark/80 backdrop-blur-md border-b border-white/5 px-8 py-4 flex items-center justify-between">
             <div>
-                <h1 class="font-display font-bold text-2xl text-white">Integrations Hub</h1>
-                <p class="text-sm text-slate-400 dark:text-slate-400">Manage external data sources & wearable streams
-                </p>
+                <h1 class="font-display font-bold text-2xl text-white">Neural Bio-Sensor</h1>
+                <p class="text-sm text-slate-400">Is your watch in sync with your health? Integrate your wearable to provide real-time vital streams for monitoring.</p>
             </div>
 
             <div class="flex items-center gap-4">
@@ -832,12 +809,40 @@
 
     <script src="js/health-connect-mock.js"></script>
     <script src="js/google-fit-api.js"></script>
+    <script src="js/vitals-streamer.js"></script>
     <script>
         // Constants
-        window.isConnected = false;
+        window.isConnected = localStorage.getItem('wearable_connected') === 'true';
         window.packetInterval = null;
         window.currentUserEmail = "";
-        window.sheetUrl = ""; // Stored CSV URL
+        window.sheetUrl = localStorage.getItem('wearable_sheet_url') || ""; 
+
+        // Initial Load Check
+        window.addEventListener('DOMContentLoaded', () => {
+            if (!window.vitalsStreamer && typeof VitalsStreamer !== 'undefined') {
+                window.vitalsStreamer = new VitalsStreamer();
+                window.vitalsStreamer.init();
+            }
+
+            if (window.isConnected) {
+                updateUIState();
+                if (window.sheetUrl) {
+                    startDataStream('Google Sheets');
+                    const btn = document.getElementById('connectSheetsBtn');
+                    if (btn) {
+                        btn.innerHTML = `<span class="material-symbols-rounded">check_circle</span> Active Bridge`;
+                        btn.className = "w-full py-3 rounded-xl bg-green-500/20 border border-green-500/50 text-green-400 text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-default";
+                    }
+                } else {
+                    startDataStream('Live Simulation');
+                    const btn = document.getElementById('gfitConnectBtn');
+                    if (btn) {
+                        btn.innerHTML = `<span class="material-symbols-rounded text-sm">check_circle</span> Demo Active`;
+                        btn.className = 'w-full py-3 rounded-xl bg-blue-500/20 border border-blue-500/50 text-blue-400 text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-default';
+                    }
+                }
+            }
+        });
 
         // --- Data Source Selection ---
         function HealthConnect_connect() {
@@ -901,8 +906,11 @@
                         btn.closest('.glass-panel').classList.add('ring-1', 'ring-green-500/50', 'bg-green-500/5');
 
                         window.isConnected = true;
+                        localStorage.setItem('wearable_connected', 'true');
+                        localStorage.setItem('wearable_sheet_url', url);
                         updateUIState();
                         startDataStream('Google Sheets');
+                        if (window.vitalsStreamer) window.vitalsStreamer.start();
                     } else {
                         throw new Error("Empty data");
                     }
@@ -1015,16 +1023,23 @@
 
             setTimeout(() => {
                 window.isConnected = true;
-
+                localStorage.setItem('wearable_connected', 'true');
+                localStorage.removeItem('wearable_sheet_url'); // Clear sheet url if using simulation
+                
                 // Ensure a user context exists for sync (Demo Fallback)
                 if (!localStorage.getItem('neurovitals_currentUser')) {
-                    const mockUser = { name: 'Demo User', email: 'demo@neurovitals.dev' };
+                    const mockUser = { 
+                        id: '00000000-0000-0000-0000-000000000000',
+                        name: 'Demo User', 
+                        email: 'demo@neurovitals.dev' 
+                    };
                     localStorage.setItem('neurovitals_currentUser', JSON.stringify(mockUser));
                     logMessage('Active session created for Demo User', 'text-slate-500');
                 }
 
                 updateUIState();
                 startDataStream('Live Simulation');
+                if (window.vitalsStreamer) window.vitalsStreamer.start();
 
                 if (gBtn) {
                     gBtn.innerHTML = `<span class="material-symbols-rounded">check_circle</span> Demo Active`;
@@ -1104,108 +1119,57 @@
 
             logMessage(`Beginning real-time data ingestion...`, 'text-white');
 
-            window.packetInterval = setInterval(async () => {
+            // --- CENTRALIZED STREAMING (V2) ---
+            // We no longer run a local setInterval here. 
+            // Instead, we listen for the 'vitalsUpdated' event from vitals-streamer.js
+            
+            if (window.vitalsStreamer) {
+                window.vitalsStreamer.start(); // Ensure it's running
+            }
+
+            // Listener for the global stream
+            window.addEventListener('vitalsUpdated', (e) => {
                 if (!window.isConnected) return;
-
-                const time = new Date().toISOString();
-                let rate, step;
-                let isReal = false;
-
-                if (source === 'Google Sheets' && sheetAdapter) {
-                    const data = await sheetAdapter.fetchLatest();
-                    if (data) {
-                        rate = data.hr;
-                        step = data.steps;
-                        isReal = true;
-                    } else {
-                        // Fallback to sim if fetch fail
-                        rate = hrSim.next();
-                        step = 0;
-                    }
-                } else {
-                    rate = hrSim.next();
-                    if (Math.random() > 0.98) step = Math.floor(Math.random() * 3);
-                    else step = 0;
-                }
-
-                // const packetId = Math.random().toString(36).substring(7).toUpperCase();
+                
+                const data = e.detail;
+                const time = data.updatedAt || new Date().toISOString();
                 const color = colors[Math.floor(Math.random() * colors.length)];
-
+                
+                // Update Console
                 const log = document.createElement('div');
                 log.className = "mb-1 font-mono text-[10px] md:text-xs border-l-2 border-transparent hover:border-white/20 pl-2 transition-all";
-
-                const stepSpan = step > 0 ? `<span class="text-white bg-white/10 px-1 rounded">STEPS:${step}</span>` : `<span class="text-slate-600">STEPS:${step}</span>`;
-                const realTag = isReal ? `<span class="text-green-500 bg-green-500/10 px-1 rounded ml-1">LIVE</span>` : '';
+                
+                const stepSpan = data.steps > 0 ? `<span class="text-white bg-white/10 px-1 rounded">STEPS:${data.steps}</span>` : `<span class="text-slate-600">STEPS:${data.steps}</span>`;
+                const realTag = source === 'Google Sheets' ? `<span class="text-green-500 bg-green-500/10 px-1 rounded ml-1">LIVE</span>` : '';
 
                 log.innerHTML = `
-                    <span class="text-slate-600">[${time.split('T')[1].replace('Z', '')}]</span> 
+                    <span class="text-slate-600">[${time.split('T')[1].replace('Z', '').split('.')[0]}]</span> 
                     <span class="${color} font-bold">${source.toUpperCase()}</span> 
                     <span class="text-slate-500">::</span> 
-                    <span class="text-slate-500">{</span> <span class="text-primary">HR:${rate}</span>, ${stepSpan} <span class="text-slate-500">}</span> ${realTag}
+                    <span class="text-slate-500">{</span> <span class="text-primary">HR:${data.heartRate}</span>, ${stepSpan} <span class="text-slate-500">}</span> ${realTag}
                 `;
 
                 consoleOut.appendChild(log);
                 consoleOut.scrollTop = consoleOut.scrollHeight;
-
                 if (consoleOut.children.length > 50) consoleOut.removeChild(consoleOut.firstChild);
 
-                const currentDisplay = parseInt(document.getElementById('packetRate').innerText.replace(/,/g, ''));
-                if (Math.abs(currentDisplay - (rate * 10)) > 50) {
-                    document.getElementById('packetRate').innerText = (rate * 12 + Math.floor(Math.random() * 50)).toLocaleString();
+                // Update Packet Rate indicator (Simulated visual)
+                const packetRate = document.getElementById('packetRate');
+                if (packetRate) {
+                    packetRate.innerText = (data.heartRate * 12 + Math.floor(Math.random() * 50)).toLocaleString();
+                    packetRate.className = "text-2xl font-display font-bold text-accent-cyan transition-colors";
                 }
 
-                // --- 3. Update Stat Cards UI ---
+                // Update Stat Cards UI
                 const stepUI = document.getElementById('gfit-steps');
                 const hrUI = document.getElementById('gfit-hr');
-                if (stepUI) stepUI.innerText = (stepUI.innerText === '—' ? step : parseInt(stepUI.innerText.replace(/,/g, '')) + step).toLocaleString();
+                if (stepUI) stepUI.innerText = (data.steps || 0).toLocaleString();
                 if (hrUI) {
-                    hrUI.innerText = `${rate} bpm`;
+                    hrUI.innerText = `${data.heartRate} bpm`;
                     hrUI.style.color = '#34d399';
                     setTimeout(() => { hrUI.style.color = ''; }, 600);
                 }
-
-                // --- 4. Persist to localStorage for Dashboard sync ---
-                const liveData = {
-                    heartRate: rate,
-                    steps: (stepUI ? parseInt(stepUI.innerText.replace(/,/g, '')) : 0),
-                    sleepHours: 7.5, // Mock constant for sim
-                    calories: 450, // Mock constant for sim
-                    updatedAt: new Date().toISOString()
-                };
-                localStorage.setItem('gfit_live_data', JSON.stringify(liveData));
-
-                // --- 5. Sync to Backend API ---
-                const currentUser = JSON.parse(localStorage.getItem('neurovitals_currentUser'));
-                if (currentUser && currentUser.email) {
-                    const vitalsPayload = {
-                        user_email: currentUser.email,
-                        heart_rate: liveData.heartRate,
-                        steps: liveData.steps,
-                        recorded_at: liveData.updatedAt,
-                        source: "simulation"
-                    };
-
-                    if (typeof apiCall === 'function') {
-                        apiCall('/save-vitals', {
-                            method: 'POST',
-                            body: JSON.stringify(vitalsPayload)
-                        }).then(() => {
-                            if (Math.random() > 0.8) logMessage(`Synced to Local AI Node ✓`, 'text-blue-400');
-                        }).catch(err => {
-                            console.warn('Backend Sim Sync Error:', err);
-                        });
-                    } else {
-                        fetch('http://localhost:8000/api/save-vitals', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(vitalsPayload)
-                        }).then(() => {
-                            if (Math.random() > 0.8) logMessage(`Synced to Backend ✓`, 'text-blue-400');
-                        });
-                    }
-                }
-
-            }, source === 'Google Sheets' ? 2000 : 800); // Slower poll for sheets to avoid rate limit
+            });
         }
 
         function logMessage(msg, colorClass = 'text-slate-400') {
@@ -1237,6 +1201,55 @@
                 }
             });
         }, 150);
+
+        function disconnectWearable() {
+            if (confirm('Disconnect wearable and stop data streaming?')) {
+                window.isConnected = false;
+                localStorage.removeItem('wearable_connected');
+                localStorage.removeItem('wearable_sheet_url');
+                localStorage.removeItem('gfit_live_data');
+                
+                if (window.packetInterval) clearInterval(window.packetInterval);
+                
+                // Reset UI
+                const badge = document.getElementById('connectionBadge');
+                if (badge) {
+                    badge.className = "flex items-center gap-2 px-3 py-1 rounded-full bg-slate-500/10 border border-slate-500/20";
+                    badge.innerHTML = `<span class="material-symbols-rounded text-slate-500 text-sm">wifi_off</span><span class="text-xs font-bold text-slate-500">DISCONNECTED</span>`;
+                }
+                
+                const dot = document.getElementById('systemStatusDot');
+                if (dot) dot.className = "w-2 h-2 rounded-full bg-slate-500";
+                
+                const statusTxt = document.getElementById('systemStatusText');
+                if (statusTxt) {
+                    statusTxt.className = "text-xs font-mono text-slate-400";
+                    statusTxt.innerText = "SYSTEM_IDLE";
+                }
+                
+                const deviceCount = document.getElementById('activeDeviceCount');
+                if (deviceCount) deviceCount.innerText = "0";
+
+                const packetRate = document.getElementById('packetRate');
+                if (packetRate) {
+                    packetRate.innerText = "0";
+                    packetRate.className = "text-2xl font-display font-bold text-slate-500";
+                }
+
+                const hrUI = document.getElementById('gfit-hr');
+                if (hrUI) hrUI.innerText = "—";
+                
+                const stepUI = document.getElementById('gfit-steps');
+                if (stepUI) stepUI.innerText = "—";
+
+                logMessage('Wearable disconnected and data cleared.', 'text-neuro-red');
+                location.reload(); // Refresh to reset all states cleanly
+            }
+        }
+
+        // Expose disconnect to global for the button in the UI
+        window.GoogleFitAPI = window.GoogleFitAPI || {};
+        window.GoogleFitAPI.disconnect = disconnectWearable;
 
         const style = document.createElement('style');
         style.innerHTML = `

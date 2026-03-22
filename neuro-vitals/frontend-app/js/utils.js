@@ -10,8 +10,167 @@ function initAuth() {
     if (user) {
         state.currentUser = JSON.parse(user);
         state.isAuthenticated = true;
+    } else {
+        state.currentUser = null;
+        state.isAuthenticated = false;
     }
     return state.isAuthenticated;
+}
+
+/**
+ * Fallback: IP-Based Geolocation (No permission popup required)
+ */
+async function getIPLocation() {
+    try {
+        const res = await fetch('https://ipapi.co/json/');
+        const data = await res.json();
+        if (data.error) throw new Error(data.reason);
+        
+        return {
+            latitude: data.latitude,
+            longitude: data.longitude,
+            location_city: data.city || "Unknown",
+            location_region: data.region || "Unknown",
+            location_country: data.country_name || "Unknown",
+            isFallback: true
+        };
+    } catch (e) {
+        console.error("IP Geolocate failed:", e);
+        return null;
+    }
+}
+
+/**
+ * Shared handler for location results (GPS or IP)
+ */
+async function handleLocationResult(locationData) {
+    if (!locationData) return null;
+
+    // Save to localStorage
+    localStorage.setItem('neurovitals_location', JSON.stringify(locationData));
+
+    // Sync to Supabase if logged in
+    if (state.currentUser && typeof upsertUserProfile === 'function') {
+        await upsertUserProfile({
+            email: state.currentUser.email,
+            ...locationData
+        });
+        
+        // --- ADMIN SYNC (Outbreak Mapping - Anonymous) ---
+        if (typeof syncToAdminTable === 'function') {
+            await syncToAdminTable({
+                ...locationData
+            });
+        }
+
+        // Update local user object
+        state.currentUser = { ...state.currentUser, ...locationData };
+        localStorage.setItem('neurovitals_currentUser', JSON.stringify(state.currentUser));
+    }
+
+    return locationData;
+}
+
+/**
+ * Capture user location once and persist to profile
+ * @returns {Promise<Object>} - { lat, lon, city, country }
+ */
+async function captureAndSaveLocation() {
+    // 1. Check if we already have it in localStorage
+    const stored = localStorage.getItem('neurovitals_location');
+    if (stored) {
+        console.log("Using cached location.");
+        return JSON.parse(stored);
+    }
+
+    // 2. Refresh current user to check profile for location
+    initAuth();
+    if (state.currentUser && state.currentUser.latitude) {
+        const loc = {
+            latitude: state.currentUser.latitude,
+            longitude: state.currentUser.longitude,
+            location_city: state.currentUser.location_city,
+            location_region: state.currentUser.location_region,
+            location_country: state.currentUser.location_country
+        };
+        localStorage.setItem('neurovitals_location', JSON.stringify(loc));
+        return loc;
+    }
+
+    // 3. Request from browser
+    return new Promise(async (resolve) => {
+        if (!navigator.geolocation) {
+            console.warn("Geolocation not supported. Trying IP fallback...");
+            const ipLoc = await getIPLocation();
+            resolve(handleLocationResult(ipLoc));
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(async (position) => {
+            const { latitude, longitude } = position.coords;
+            
+            // Try to reverse geocode (Optional/Best Effort)
+            let city = "Unknown", country = "Unknown", region = "Unknown", fullAddr = "Unknown";
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                const data = await res.json();
+                city = data.address.city || data.address.town || data.address.village || "Unknown";
+                region = data.address.state || data.address.county || "Unknown";
+                country = data.address.country || "Unknown";
+                fullAddr = data.display_name || `${city}, ${country}`;
+            } catch (e) { console.warn("Reverse geocode failed."); }
+
+            const locationData = { 
+                latitude, 
+                longitude, 
+                location_city: city, 
+                location_region: region, 
+                location_country: country,
+                location: fullAddr
+            };
+            resolve(handleLocationResult(locationData));
+
+        }, async (error) => {
+            console.warn("Location access denied or failed. Trying IP fallback...", error);
+            const ipLoc = await getIPLocation();
+            if (ipLoc) {
+                resolve(handleLocationResult(ipLoc));
+            } else {
+                showToast("Location access denied. Using network defaults.", "error");
+                resolve(null);
+            }
+        }, { timeout: 8000 });
+    });
+}
+
+/**
+ * Force high-accuracy GPS capture for mission-critical reports
+ */
+async function getHighAccuracyLocation() {
+    return new Promise((resolve) => {
+        if (!navigator.geolocation) {
+            resolve(getIPLocation());
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                const { latitude, longitude } = pos.coords;
+                const loc = { 
+                    latitude, 
+                    longitude, 
+                    location_city: "Resolving...", 
+                    location_region: "Resolving...", 
+                    location_country: "Resolving...",
+                    location: "Resolving exact address..."
+                };
+                localStorage.setItem('neurovitals_location', JSON.stringify(loc));
+                resolve(loc);
+            },
+            async () => resolve(await getIPLocation()),
+            { enableHighAccuracy: true, timeout: 8000, maximumAge: 10000 }
+        );
+    });
 }
 
 // Check if user is logged in and has completed onboarding
@@ -46,7 +205,7 @@ function logout() {
 }
 
 // API configuration
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = `${CONFIG.API_BASE_URL}/api`;
 
 // API helper functions
 async function apiCall(endpoint, options = {}) {

@@ -8,7 +8,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 from app.services.risk_engine import (
-    get_or_create_user,
+    get_profile,
     update_user_profile,
     save_daily_log,
     save_medical_history,
@@ -17,7 +17,7 @@ from app.services.risk_engine import (
 )
 from app.services.ocr_helper import extract_text_from_image
 
-router = APIRouter(prefix="/api/risk", tags=["Risk Engine"])
+router = APIRouter(prefix="/risk", tags=["Risk Engine"])
 
 
 # ─── Request / Response Models ────────────────────────────────────
@@ -70,56 +70,40 @@ async def predict_risk(request: RiskPredictionRequest):
     Returns AI-generated risk assessment with scores, reasoning, and recommendations.
     """
     try:
-        # Get or create user
-        user = get_or_create_user(request.profile.email)
-        if not user:
-            raise HTTPException(status_code=500, detail="Failed to get/create user")
+        user_email = request.profile.email
+        user = get_profile(user_email)
 
-        user_id = user["id"]
+        # Update profile if DB is available
+        if user_email != "fallback_id":
+            profile_update = {}
+            if request.profile.age: profile_update["age"] = request.profile.age
+            if request.profile.gender: profile_update["gender"] = request.profile.gender
+            # Map full_name to name
+            if request.profile.full_name: profile_update["name"] = request.profile.full_name
+            
+            if profile_update:
+                update_user_profile(user_email, profile_update)
+                if user: user.update(profile_update)
 
-        # Update profile if provided
-        profile_update = {}
-        if request.profile.age:
-            profile_update["age"] = request.profile.age
-        if request.profile.gender:
-            profile_update["gender"] = request.profile.gender
-        if request.profile.height_cm:
-            profile_update["height_cm"] = request.profile.height_cm
-        if request.profile.weight_kg:
-            profile_update["weight_kg"] = request.profile.weight_kg
-        if request.profile.full_name:
-            profile_update["full_name"] = request.profile.full_name
-        if request.profile.existing_conditions is not None:
-            profile_update["existing_conditions"] = request.profile.existing_conditions
-        if request.profile.family_history is not None:
-            profile_update["family_history"] = request.profile.family_history
+            # Save daily log if provided
+            if request.daily_log:
+                save_daily_log(user_email, request.daily_log.model_dump())
 
-        if profile_update:
-            update_user_profile(user_id, profile_update)
-            # Refresh user data
-            user.update(profile_update)
+            # Save medical records if provided
+            if request.medical_records:
+                for record in request.medical_records:
+                    save_medical_history(user_email, record.model_dump())
 
-        # Save daily log if provided
-        if request.daily_log:
-            save_daily_log(user_id, request.daily_log.model_dump())
-
-        # Save medical records if provided
-        if request.medical_records:
-            for record in request.medical_records:
-                save_medical_history(user_id, record.model_dump())
-
-        # Load full history for AI prompt
-        history = load_user_history(user_id)
+        # Load history
+        history = load_user_history(user_email)
 
         # Build user_data dict for prompt
         user_data = {
             "profile": {
-                "age": user.get("age", 30),
-                "gender": user.get("gender", "other"),
-                "height_cm": user.get("height_cm", 170),
-                "weight_kg": user.get("weight_kg", 70),
-                "existing_conditions": user.get("existing_conditions", []),
-                "family_history": user.get("family_history", []),
+                "age": request.profile.age or (user.get("age") if user else 30),
+                "gender": request.profile.gender or (user.get("gender") if user else "other"),
+                "existing_conditions": list(set((request.profile.existing_conditions or []) + (user.get("existing_conditions", []) if user else []))),
+                "family_history": list(set((request.profile.family_history or []) + (user.get("family_history", []) if user else []))),
             },
             "daily_log": request.daily_log.model_dump() if request.daily_log else {},
             "medical_records": [
@@ -130,6 +114,8 @@ async def predict_risk(request: RiskPredictionRequest):
                 }
                 for r in history.get("medical_history", [])
             ],
+            "vitals": history.get("vitals", []),
+            "symptom_analysis_history": history.get("symptom_history", []),
             "historical_trends": {
                 "daily_logs": history.get("daily_logs", []),
                 "recent_predictions": history.get("recent_predictions", []),
@@ -137,11 +123,11 @@ async def predict_risk(request: RiskPredictionRequest):
         }
 
         # Run prediction
-        result = run_risk_prediction(user_id, user_data)
+        result = run_risk_prediction(user_email, user_data)
 
         return {
             "status": "success",
-            "user_id": user_id,
+            "email": user_email,
             "prediction": result,
         }
 
@@ -176,15 +162,15 @@ async def get_user_history(email: str, days: int = 30):
     Get user's health history (daily logs, medical records, predictions).
     """
     try:
-        user = get_or_create_user(email)
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+        profile = get_profile(email)
+        if not profile:
+            raise HTTPException(status_code=404, detail="Profile not found")
 
-        history = load_user_history(user["id"], days)
+        history = load_user_history(email, days)
         return {
             "status": "success",
-            "user_id": user["id"],
-            "profile": user,
+            "email": email,
+            "profile": profile,
             "history": history,
         }
     except HTTPException:
@@ -197,11 +183,7 @@ async def get_user_history(email: str, days: int = 30):
 async def save_log(user_email: str, log: DailyLogInput):
     """Save a daily health log entry."""
     try:
-        user = get_or_create_user(user_email)
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-
-        ok, err = save_daily_log(user["id"], log.model_dump())
+        ok, err = save_daily_log(user_email, log.model_dump())
         if ok:
             return {"status": "success", "message": "Daily log saved"}
         raise HTTPException(status_code=500, detail=err)
@@ -215,11 +197,7 @@ async def save_log(user_email: str, log: DailyLogInput):
 async def save_record(user_email: str, record: MedicalRecordInput):
     """Save a medical history record."""
     try:
-        user = get_or_create_user(user_email)
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-
-        ok, err = save_medical_history(user["id"], record.model_dump())
+        ok, err = save_medical_history(user_email, record.model_dump())
         if ok:
             return {"status": "success", "message": "Medical record saved"}
         raise HTTPException(status_code=500, detail=err)

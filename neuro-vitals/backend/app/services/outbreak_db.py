@@ -72,42 +72,59 @@ def save_to_database(
     location_data: dict | None = None,
 ) -> int | None:
     try:
-        disease_info = DiseaseClassifier.classify_disease(ai_response)
+        # 1. Get form_id from medical_forms (linkage)
+        email = data.get("email") or data.get("user_email")
+        form_id = None
+        if email:
+            f_res = _get_sb().table("medical_forms").select("formid").eq("user_email", email).order("updated_at", desc=True).limit(1).execute()
+            if f_res.data:
+                form_id = f_res.data[0]["formid"]
 
         patient_record = {
-            "name": data["name"],
-            "age": data["age"],
-            "gender": data["gender"],
-            "symptoms": data["symptoms"],
-            "severity": data["severity"],
-            "duration": data["duration"],
-            "ai_response": ai_response,
-            "image_url": image_url,
-            "created_at": datetime.now().isoformat(),
+            "form_id": form_id,
+            "symptoms_data": {
+                "name": data.get("name"),
+                "age": data.get("age"),
+                "gender": data.get("gender"),
+                "symptoms": data.get("symptoms"),
+                "severity": data.get("severity"),
+                "duration": data.get("duration"),
+                "ai_response": ai_response,
+                "image_url": image_url,
+            },
+            "risk_level": data.get("severity") or "Low",
+            "recorded_at": datetime.now().isoformat(),
         }
 
         result = _get_sb().table("records").insert(patient_record).execute()
 
         if result.data:
-            patient_id = result.data[0]["id"]
+            p_id = result.data[0]["p_id"]
+
+            # Classify disease for admin/map
+            classification = DiseaseClassifier.classify_disease(ai_response)
 
             if location_data and location_data.get("latitude"):
-                admin_record = {
-                    "patient_id": patient_id,
-                    "latitude": location_data.get("latitude"),
-                    "longitude": location_data.get("longitude"),
-                    "location_city": location_data.get("city"),
-                    "location_region": location_data.get("region"),
-                    "location_country": location_data.get("country"),
-                    "disease_category": disease_info["category"],
-                    "spreadable": disease_info["spreadable"],
-                    "disease_type": disease_info["disease_type"],
-                    "created_at": datetime.now().isoformat(),
-                }
-                _get_sb().table("admin").insert(admin_record).execute()
+                # Defensive check for admin table
+                try:
+                    admin_record = {
+                        "latitude": location_data.get("latitude"),
+                        "longitude": location_data.get("longitude"),
+                        "location_city": location_data.get("city"),
+                        "location_region": location_data.get("region"),
+                        "location_country": location_data.get("country"),
+                        "location": location_data.get("exact_location"),
+                        "symptoms": f"{classification.get('disease_type')} | PRECAUTION: {classification.get('precautions')}",
+                        "disease_category": classification.get("category"),
+                        "spreadable": classification.get("spreadable"),
+                        "created_at": datetime.now().isoformat(),
+                    }
+                    _get_sb().table("admin").insert(admin_record).execute()
+                except Exception as admin_exc:
+                    logger.warning("Admin (geolocation) table error: %s", admin_exc)
 
-            logger.info("Saved patient %s (disease: %s)", patient_id, disease_info["disease_type"])
-            return patient_id
+            logger.info("Saved patient record %s", p_id)
+            return p_id
 
     except Exception as exc:
         logger.error("Database save error: %s", exc)
@@ -115,48 +132,72 @@ def save_to_database(
 
 
 # ──────────────────────────────────────────────
+#  Helpers & Classification
+# ──────────────────────────────────────────────
+def is_viral(disease_name: str) -> bool:
+    """Check if a disease name suggests a viral infection."""
+    if not disease_name:
+        return False
+    viral_keywords = [
+        "viral", "flu", "influenza", "covid", "dengue", "chikungunya", 
+        "measles", "mumps", "rubella", "hepatitis", "herpes", "hiv",
+        "ebola", "zika", "rabies", "cold", "rhinovirus"
+    ]
+    name_lower = disease_name.lower()
+    return any(kw in name_lower for kw in viral_keywords)
+
+
+# ──────────────────────────────────────────────
 #  Map queries
 # ──────────────────────────────────────────────
-def get_spreadable_diseases_for_map() -> list:
-    """Return spreadable-only diseases from the last 20 days."""
+def get_spreadable_diseases_for_map(only_viral: bool = True) -> list:
+    """Return outbreak records for the map. Filters for viral if only_viral=True."""
     try:
-        cleanup_old_records()
         cutoff = (datetime.now() - timedelta(days=20)).isoformat()
+        
+        # Base query
+        query = _get_sb().table("admin").select(
+            "id, latitude, longitude, location_city, location_region, "
+            "disease_type, disease_category, created_at, spreadable, "
+            "records:patient_id (p_id, symptoms_data, risk_level)"
+        ).gte("created_at", cutoff).not_.is_("latitude", "null")
 
-        result = (
-            _get_sb()
-            .table("admin")
-            .select(
-                "id, latitude, longitude, location_city, location_region, "
-                "disease_category, disease_type, created_at, "
-                "records:patient_id (name, age, gender, symptoms, severity)"
-            )
-            .eq("spreadable", True)
-            .gte("created_at", cutoff)
-            .not_.is_("latitude", "null")
-            .execute()
-        )
-        return result.data
+        result = query.execute()
+        data = result.data or []
+
+        if only_viral:
+            # Filter in Python for complexity vs simple SQL ilike
+            data = [
+                r for r in data 
+                if is_viral(r.get("disease_type")) or r.get("disease_category") == "flu_like"
+            ]
+            
+        return data
     except Exception as exc:
-        logger.error("Map query error: %s", exc)
+        logger.warning("Admin table query failed: %s", exc)
         return []
 
 
 def get_all_patients_for_admin() -> list:
-    """Return every patient record for the admin dashboard."""
+    """Return every patient record with location info directly from the admin table."""
     try:
-        cleanup_old_records()
+        # Fetch directly from admin table as join is failing in this environment
         result = (
             _get_sb()
             .table("admin")
-            .select("*, records:patient_id (*)")
+            .select("*")
             .order("created_at", desc=True)
             .execute()
         )
         return result.data
     except Exception as exc:
         logger.error("Admin query error: %s", exc)
-        return []
+        # Fallback to records if admin join fails
+        try:
+            res = _get_sb().table("records").select("*").order("recorded_at", desc=True).execute()
+            return [{"records": r} for r in res.data]
+        except:
+            return []
 
 
 def get_nearby_outbreaks(user_lat: float, user_lng: float, radius_km: float = 10) -> list:

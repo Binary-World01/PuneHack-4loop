@@ -11,25 +11,57 @@ from fastapi import Request
 
 logger = logging.getLogger(__name__)
 
+async def reverse_geocode(lat: float, lon: float) -> dict:
+    """Reverse geocode coordinates via Nominatim."""
+    try:
+        async with httpx.AsyncClient() as client:
+            # Note: User-Agent is required by Nominatim
+            headers = {"User-Agent": "Neuro-Vitals-App/1.0"}
+            resp = await client.get(
+                f"https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}",
+                headers=headers,
+                timeout=5.0
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                addr = data.get("address", {})
+                return {
+                    "city": addr.get("city") or addr.get("town") or addr.get("village") or "Unknown",
+                    "region": addr.get("state") or addr.get("county") or "Unknown",
+                    "country": addr.get("country") or "Unknown",
+                    "exact_location": data.get("display_name") or "Unknown"
+                }
+    except Exception as exc:
+        logger.warning("Reverse geocode failed: %s", exc)
+    return {}
+
 
 async def get_client_location(
     request: Request,
     gps_latitude: float | None = None,
     gps_longitude: float | None = None,
+    city: str | None = None,
+    country: str | None = None,
+    exact_location: str | None = None
 ) -> dict:
-    """Return a location dict with lat/lng/city/region/country/source."""
+    """Return a location dict with lat/lng/city/region/country/source/exact_location."""
     try:
         # Prefer browser GPS when available
         if gps_latitude and gps_longitude:
-            logger.info("GPS location: %s, %s", gps_latitude, gps_longitude)
+            logger.info("GPS coordinates received: %s, %s", gps_latitude, gps_longitude)
+            
+            # Resolve address on backend to save frontend time
+            addr = await reverse_geocode(gps_latitude, gps_longitude)
+            
             return {
                 "latitude": float(gps_latitude),
                 "longitude": float(gps_longitude),
-                "city": "Unknown",
-                "region": "Unknown",
-                "country": "Unknown",
+                "city": addr.get("city") or city or "Unknown",
+                "region": addr.get("region") or "Unknown",
+                "country": addr.get("country") or country or "Unknown",
                 "ip": request.client.host,
                 "source": "gps",
+                "exact_location": exact_location or addr.get("exact_location") or f"{city}, {country}"
             }
 
         # Fallback: IP geolocation
@@ -58,6 +90,7 @@ async def get_client_location(
                         "country": data.get("country"),
                         "ip": client_ip,
                         "source": "ip_geolocation",
+                        "exact_location": data.get("city") + ", " + data.get("country")
                     }
     except Exception as exc:
         logger.error("Location error: %s", exc)
@@ -70,4 +103,5 @@ async def get_client_location(
         "country": None,
         "ip": request.client.host,
         "source": "unknown",
+        "exact_location": "Unknown"
     }

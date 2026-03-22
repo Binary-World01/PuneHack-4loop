@@ -23,7 +23,7 @@ from app.services.outbreak_db import (
 )
 from app.services.location_service import get_client_location
 
-router = APIRouter(prefix="/api/outbreak", tags=["outbreak"])
+router = APIRouter(prefix="/outbreak", tags=["outbreak"])
 
 
 # ──────────────────────────────────────────────
@@ -40,11 +40,16 @@ async def analyze(
     duration: int = Form(...),
     latitude: float = Form(None),
     longitude: float = Form(None),
+    location_city: str = Form(None),
+    location_country: str = Form(None),
+    location: str = Form(None),
     image: UploadFile = File(None),
 ):
     """Analyse patient symptoms via Gemini, classify, geo-tag, and save."""
     try:
-        location_data = await get_client_location(request, latitude, longitude)
+        location_data = await get_client_location(
+            request, latitude, longitude, location_city, location_country, exact_location=location
+        )
 
         data = {
             "name": name, "age": age, "gender": gender,

@@ -2,11 +2,11 @@
  * Google Fit API Integration — Neuro-Vitals
  * Complete OAuth 2.0 implementation with fixed sleep data
  */
-const GoogleFitAPI = (() => {
+window.GoogleFitAPI = (() => {
     // ─── CONFIG ────────────────────────────────────────────────────────────────
     const CLIENT_ID = '993273774998-s2ftrtqpsambtul5qhkl8mf58pjs8ql0.apps.googleusercontent.com';
     const CLIENT_SECRET = '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';
-    const REDIRECT_URI = 'http://localhost:5500/integrations.html';
+    const REDIRECT_URI = 'http://127.0.0.1:5501/neuro-vitals/frontend-app/integrations.html';
 
     const SCOPES = [
         'https://www.googleapis.com/auth/fitness.activity.read',
@@ -185,6 +185,9 @@ const GoogleFitAPI = (() => {
             refreshToken = tokenData.refresh_token;
 
             log('✓ OAuth successful! Access token received', 'text-green-400');
+            if (typeof showToast === 'function') {
+                showToast('Google Fit Connected Successfully!', 'success');
+            }
 
             window.history.replaceState({}, document.title, window.location.pathname);
             await getUserInfoAndStart();
@@ -477,20 +480,20 @@ const GoogleFitAPI = (() => {
 
         if (stepsEl && data.steps) {
             stepsEl.textContent = data.steps.toLocaleString();
-            stepsEl.style.color = '#34d399';
-            setTimeout(() => { stepsEl.style.color = ''; }, 600);
+            stepsEl.classList.add('animate-pulse', 'text-accent-cyan');
+            setTimeout(() => { stepsEl.classList.remove('animate-pulse', 'text-accent-cyan'); }, 2000);
         }
 
         if (hrEl && data.heartRate) {
             hrEl.textContent = `${data.heartRate} bpm`;
-            hrEl.style.color = '#34d399';
-            setTimeout(() => { hrEl.style.color = ''; }, 600);
+            hrEl.classList.add('animate-pulse', 'text-red-400');
+            setTimeout(() => { hrEl.classList.remove('animate-pulse', 'text-red-400'); }, 2000);
         }
 
         if (sleepEl && data.sleepHours) {
             sleepEl.textContent = `${data.sleepHours}h`;
-            sleepEl.style.color = '#34d399';
-            setTimeout(() => { sleepEl.style.color = ''; }, 600);
+            sleepEl.classList.add('animate-pulse', 'text-purple-400');
+            setTimeout(() => { sleepEl.classList.remove('animate-pulse', 'text-purple-400'); }, 2000);
             log(`✓ Sleep displayed: ${data.sleepHours}h`, 'text-green-400');
         } else if (sleepEl) {
             sleepEl.textContent = '—';
@@ -498,8 +501,8 @@ const GoogleFitAPI = (() => {
 
         if (caloriesEl && data.calories) {
             caloriesEl.textContent = `${data.calories} kcal`;
-            caloriesEl.style.color = '#34d399';
-            setTimeout(() => { caloriesEl.style.color = ''; }, 600);
+            caloriesEl.classList.add('animate-pulse', 'text-yellow-400');
+            setTimeout(() => { caloriesEl.classList.remove('animate-pulse', 'text-yellow-400'); }, 2000);
         }
 
         const packetRate = document.getElementById('packetRate');
@@ -513,12 +516,12 @@ const GoogleFitAPI = (() => {
         }
     }
 
-    // ─── SAVE TO DATABASE ─────────────────────────────────────────────────────
     async function saveToDatabase(data) {
         const currentUser = JSON.parse(localStorage.getItem('neurovitals_currentUser') || '{}');
-        const email = userEmail || currentUser.email || localStorage.getItem('gfit_email') || 'unknown@user.com';
+        const email = currentUser.email || userEmail || localStorage.getItem('gfit_email') || 'unknown@user.com';
 
         const payload = {
+            user_id: currentUser.id || '00000000-0000-0000-0000-000000000000',
             user_email: email,
             steps: data.steps || 0,
             heart_rate: data.heartRate || 0,
@@ -529,7 +532,7 @@ const GoogleFitAPI = (() => {
         };
 
         try {
-            const response = await fetch('http://localhost:8000/api/save-vitals', {
+            const response = await fetch('http://localhost:8000/api/vitals/save-vitals', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -539,7 +542,7 @@ const GoogleFitAPI = (() => {
                 log('✓ Data saved to database', 'text-green-400');
             }
         } catch (error) {
-            log(`⚠️ Database error: ${error.message}`, 'text-yellow-400');
+            console.warn(`⚠️ Database error: ${error.message}`);
         }
 
         localStorage.setItem('gfit_live_data', JSON.stringify({
@@ -554,6 +557,7 @@ const GoogleFitAPI = (() => {
     function setConnectedState(email) {
         isConnected = true;
         window.isConnected = true;
+        localStorage.setItem('wearable_connected', 'true');
 
         const badge = document.getElementById('connectionBadge');
         if (badge) {
@@ -614,9 +618,19 @@ const GoogleFitAPI = (() => {
 
     // ─── PUBLIC METHODS ───────────────────────────────────────────────────────
     function connect() {
+        console.log('Connect function called');
+        
         if (isConnected) {
             log('Already connected to Google Fit.', 'text-yellow-400');
             return;
+        }
+
+        if (window.location.href.toLowerCase() !== REDIRECT_URI.toLowerCase()) {
+            const msg = `⚠️ URL MISMATCH!\n\nGoogle OAuth requires you to be at:\n${REDIRECT_URI}`;
+            if (typeof showToast === 'function') {
+                showToast('URL Mismatch: Check logs for details', 'error');
+            }
+            console.error(msg + `\nYou are currently at: ${window.location.href}`);
         }
 
         log('Redirecting to Google for authorization...', 'text-blue-400');
@@ -636,6 +650,7 @@ const GoogleFitAPI = (() => {
             include_granted_scopes: 'true'
         });
 
+        console.log('Final Auth URL:', authUrl);
         window.location.href = authUrl;
     }
 
@@ -705,10 +720,8 @@ const GoogleFitAPI = (() => {
     return { connect, disconnect, init };
 })();
 
-window.GoogleFitAPI = GoogleFitAPI;
-
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
-        GoogleFitAPI.init();
+        if (window.GoogleFitAPI) window.GoogleFitAPI.init();
     }, 500);
 });

@@ -5,5 +5,4 @@ echo ====================================
 echo.
 
 cd backend
-call venv\Scripts\activate
-python -m app.main
+.\venv_win\Scripts\python.exe -m app.main

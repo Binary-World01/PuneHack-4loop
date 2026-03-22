@@ -4,7 +4,13 @@ Main FastAPI Application
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.routers import diagnosis, adversarial, trajectory, community, vitals, risk, outbreak
+from app.routers.diagnosis import router as diagnosis_router
+from app.routers.adversarial import router as adversarial_router
+from app.routers.trajectory import router as trajectory_router
+from app.routers.community import router as community_router
+from app.routers.vitals import router as vitals_router
+from app.routers.risk import router as risk_router
+from app.routers.outbreak import router as outbreak_router
 
 # Create FastAPI app
 app = FastAPI(
@@ -22,14 +28,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(diagnosis.router)
-app.include_router(adversarial.router)
-app.include_router(trajectory.router)
-app.include_router(community.router)
-app.include_router(vitals.router)
-app.include_router(risk.router)
-app.include_router(outbreak.router)
+# Include routers with explicit global /api prefix
+app.include_router(diagnosis_router, prefix="/api")
+app.include_router(adversarial_router, prefix="/api")
+app.include_router(trajectory_router, prefix="/api")
+app.include_router(community_router, prefix="/api")
+app.include_router(vitals_router, prefix="/api")
+app.include_router(risk_router, prefix="/api")
+app.include_router(outbreak_router, prefix="/api")
 
 
 @app.get("/")

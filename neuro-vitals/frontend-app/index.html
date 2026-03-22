@@ -6,6 +6,10 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Neuro-Vitals | AI-Powered Healthcare Intelligence</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/utils.js"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&family=Poppins:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap"
         rel="stylesheet" />
@@ -210,8 +214,7 @@
             background: #0a0604;
             border-left: 1px solid rgba(236, 91, 19, 0.1);
         }
-
-        ::-webkit-scrollbar-thumb {
+          ::-webkit-scrollbar-thumb {
             background: linear-gradient(180deg, #ec5b13 0%, #ff8a3d 100%);
             border-radius: 6px;
             border: 2px solid #0a0604;
@@ -429,14 +432,13 @@
                         accuracy, transparency, and real-time insights.</p>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                     <div class="glass-card rounded-2xl p-8 feature-card scroll-reveal" style="transition-delay: 0s">
-                        <div class="size-14 rounded-xl gradient-orange flex items-center justify-center mb-6">
-                            <span class="material-symbols-rounded text-3xl text-white">analytics</span>
+                        <div class="size-14 rounded-xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center mb-6">
+                            <span class="material-symbols-rounded text-3xl text-white">health_metrics</span>
                         </div>
-                        <h3 class="text-xl font-bold mb-3">Smart Analysis</h3>
-                        <p class="text-sm text-slate-400 leading-relaxed">Explainable AI diagnostics with transparent
-                            reasoning and confidence metrics for every prediction.</p>
+                        <h3 class="text-xl font-bold mb-3">Symptoms Analysis</h3>
+                        <p class="text-sm text-slate-400 leading-relaxed">Understand the 'Why.' Discover the specific data points that tipped the scale and map your path to recovery.</p>
                     </div>
 
                     <div class="glass-card rounded-2xl p-8 feature-card scroll-reveal" style="transition-delay: 0.1s">
@@ -444,28 +446,34 @@
                             class="size-14 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center mb-6">
                             <span class="material-symbols-rounded text-3xl text-white">swords</span>
                         </div>
-                        <h3 class="text-xl font-bold mb-3">AI Debate Arena</h3>
-                        <p class="text-sm text-slate-400 leading-relaxed">Three competing AIs challenge each diagnosis
-                            through adversarial validation for maximum accuracy.</p>
+                        <h3 class="text-xl font-bold mb-3">Debatable AI</h3>
+                        <p class="text-sm text-slate-400 leading-relaxed">Are your symptoms framing the wrong disease? Let our Debatable AI cross-examine every variable to uncover truth.</p>
                     </div>
 
                     <div class="glass-card rounded-2xl p-8 feature-card scroll-reveal" style="transition-delay: 0.2s">
-                        <div class="size-14 rounded-xl gradient-blue flex items-center justify-center mb-6">
-                            <span class="material-symbols-rounded text-3xl text-white">trending_up</span>
+                        <div class="size-14 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-6">
+                            <span class="material-symbols-rounded text-3xl text-white">watch</span>
                         </div>
-                        <h3 class="text-xl font-bold mb-3">Health Forecast</h3>
-                        <p class="text-sm text-slate-400 leading-relaxed">6-month risk prediction with intervention
-                            scenario modeling and personalized recommendations.</p>
+                        <h3 class="text-xl font-bold mb-3">Bio-Sync Hub</h3>
+                        <p class="text-sm text-slate-400 leading-relaxed">Is your watch in sync with your health? Link your wearable to provide real-time vital streams for continuous monitoring.</p>
                     </div>
 
                     <div class="glass-card rounded-2xl p-8 feature-card scroll-reveal" style="transition-delay: 0.3s">
                         <div
-                            class="size-14 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center mb-6">
-                            <span class="material-symbols-rounded text-3xl text-white">public</span>
+                            class="size-14 rounded-xl bg-neuro-green-500 bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center mb-6">
+                            <span class="material-symbols-rounded text-3xl text-white">vital_signs</span>
                         </div>
-                        <h3 class="text-xl font-bold mb-3">Community Intel</h3>
-                        <p class="text-sm text-slate-400 leading-relaxed">Real-time outbreak detection and geographic
-                            heat mapping across connected healthcare networks.</p>
+                        <h3 class="text-xl font-bold mb-3">Neural Bio-Sensor</h3>
+                        <p class="text-sm text-slate-400 leading-relaxed">What if you could catch a crisis before it even begins? Our sensor scans your biometric rhythm for flickers of risk.</p>
+                    </div>
+
+                    <div class="glass-card rounded-2xl p-8 feature-card scroll-reveal" style="transition-delay: 0.4s">
+                        <div
+                            class="size-14 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center mb-6">
+                            <span class="material-symbols-rounded text-3xl text-white">coronavirus</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">Community Sentinel</h3>
+                        <p class="text-sm text-slate-400 leading-relaxed">Is a hidden threat moving through your neighborhood? Monitors local data to warn you before the next wave hits.</p>
                     </div>
                 </div>
             </div>
@@ -549,7 +557,7 @@
                                             <h3 class="font-bold text-sm">Patient Health Trend</h3>
                                             <select
                                                 class="glass-card border border-white/10 rounded-lg px-3 py-1.5 text-xs cursor-pointer focus:outline-none focus:border-primary transition-all"
-                                                style="backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); appearance: none; background-image: url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 24 24%27 stroke=%27%23ec5b13%27%3E%3Cpath stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%272%27 d=%27M19 9l-7 7-7-7%27%3E%3C/path%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: right 0.5rem center; background-size: 1em; padding-right: 2rem;">
+                                                style="backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); appearance: none; -webkit-appearance: none; background-image: url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 24 24%27 stroke=%27%23ec5b13%27%3E%3Cpath stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%272%27 d=%27M19 9l-7 7-7-7%27%3E%3C/path%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: right 0.5rem center; background-size: 1em; padding-right: 2rem;">
                                                 <option class="bg-slate-900">Last 7 Days</option>
                                                 <option class="bg-slate-900">Last 30 Days</option>
                                                 <option class="bg-slate-900">Last 90 Days</option>
@@ -1066,6 +1074,11 @@
                     class="text-primary hover:text-orange-500 transition-colors font-semibold">
                     Don't have an account? <strong>Sign Up</strong>
                 </button>
+                <div class="pt-2">
+                    <button onclick="loginAsAdmin()" class="text-[10px] text-white/30 hover:text-primary transition-all uppercase tracking-widest font-bold border border-white/5 px-4 py-2 rounded-lg hover:border-primary/30 hover:bg-primary/5">
+                        Institutional Login (Admin)
+                    </button>
+                </div>
                 <br />
                 <button onclick="showLanding()"
                     class="text-slate-500 hover:text-white transition-colors flex items-center gap-2 mx-auto">
@@ -1192,6 +1205,12 @@
         });
 
         // Page Navigation
+        function loginAsAdmin() {
+            document.getElementById('signInEmail').value = 'admin';
+            document.getElementById('signInPassword').value = 'admin123';
+            handleSignIn({ preventDefault: () => {} });
+        }
+
         function showSignIn() {
             document.getElementById('landingPage').classList.add('hidden');
             document.getElementById('signUpForm').classList.add('hidden');
@@ -1214,47 +1233,120 @@
         }
 
         // Sign In Handler
-        function handleSignIn(e) {
+        async function handleSignIn(e) {
             e.preventDefault();
             const email = document.getElementById('signInEmail').value;
             const password = document.getElementById('signInPassword').value;
 
-            const users = JSON.parse(localStorage.getItem('neurovitals_users')) || [];
-            const user = users.find(u => u.email === email && u.password === password);
+            // 0. Hardcoded Admin Login
+            if (email === 'admin' && password === 'admin123') {
+                localStorage.setItem('neurovitals_currentUser', JSON.stringify({ 
+                    id: 'admin-id', 
+                    email: 'admin', 
+                    full_name: 'System Administrator',
+                    role: 'admin'
+                }));
+                window.location.href = 'outbreak-admin.html';
+                return;
+            }
 
-            if (user) {
-                localStorage.setItem('neurovitals_currentUser', JSON.stringify(user));
+            // 1. Try Custom Table-based Login (For existing/legacy credentials)
+            const { data: profile, error: profileErr } = await loginUser(email, password);
+
+            if (profile) {
+                // Reset location state for fresh session tracking
+                localStorage.removeItem('neurovitals_location');
+                localStorage.removeItem('current_admin_node_id');
+                localStorage.removeItem('last_symptom_analysis');
+                
+                localStorage.setItem('neurovitals_currentUser', JSON.stringify({ ...profile }));
+                window.location.href = 'dashboard.html';
+                return;
+            }
+
+            // 2. Fallback: Try Supabase Auth
+            const { data, error } = await window.supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password,
+            });
+
+            if (data.user) {
+                // Reset location state for fresh session tracking
+                localStorage.removeItem('neurovitals_location');
+                localStorage.removeItem('current_admin_node_id');
+                localStorage.removeItem('last_symptom_analysis');
+
+                // Fetch profile to merge
+                const { data: userProfile } = await window.supabaseClient
+                    .from('profiles')
+                    .select('*')
+                    .eq('email', data.user.email)
+                    .single();
+                
+                localStorage.setItem('neurovitals_currentUser', JSON.stringify({ ...data.user, ...userProfile }));
                 window.location.href = 'dashboard.html';
             } else {
-                alert('Invalid credentials. Please try again or sign up.');
+                alert('Login Failed: ' + (profileErr ? 'Invalid credentials' : error.message));
             }
         }
 
         // Sign Up Handler
-        function handleSignUp(e) {
+        async function handleSignUp(e) {
             e.preventDefault();
             const name = document.getElementById('signUpName').value;
             const email = document.getElementById('signUpEmail').value;
             const password = document.getElementById('signUpPassword').value;
 
-            const users = JSON.parse(localStorage.getItem('neurovitals_users')) || [];
+            // Handle Supabase Auth SignUp
+            const { data, error } = await window.supabaseClient.auth.signUp({
+                email: email,
+                password: password,
+                options: {
+                    data: {
+                        full_name: name,
+                    }
+                }
+            });
 
-            if (users.find(u => u.email === email)) {
-                alert('Email already registered. Please sign in.');
-                return;
+            if (data.user || !error) {
+                // Reset location state for fresh session tracking
+                localStorage.removeItem('neurovitals_location');
+                localStorage.removeItem('current_admin_node_id');
+                localStorage.removeItem('last_symptom_analysis');
+
+                // Create profile entry with password for compatibility
+                await upsertUserProfile({
+                    id: data.user.id,
+                    email: email,
+                    full_name: name,
+                    password: password
+                });
+                
+                localStorage.setItem('neurovitals_currentUser', JSON.stringify({ 
+                    ...data.user, 
+                    full_name: name 
+                }));
+                window.location.href = 'onboarding.html';
+            } else {
+                alert('Error: ' + error.message);
             }
-
-            const newUser = { name, email, role: 'patient', password };
-            users.push(newUser);
-            localStorage.setItem('neurovitals_users', JSON.stringify(users));
-            localStorage.setItem('neurovitals_currentUser', JSON.stringify(newUser));
-
-            window.location.href = 'onboarding.html';
         }
 
         // Sign Out Handler
         function handleSignOut() {
+            // Full Clean for Vitals Security
             localStorage.removeItem('neurovitals_currentUser');
+            localStorage.removeItem('neurovitals_location');
+            localStorage.removeItem('current_admin_node_id');
+            localStorage.removeItem('last_symptom_analysis');
+            localStorage.removeItem('wearable_connected');
+            localStorage.removeItem('gfit_live_data');
+            localStorage.removeItem('wearable_sheet_url');
+            
+            if (window.vitalsStreamer) {
+                window.vitalsStreamer.stop();
+            }
+
             document.getElementById('signInBtn').style.display = 'inline-block';
             document.getElementById('signUpBtn').style.display = 'inline-block';
             document.getElementById('signOutBtn').style.display = 'none';

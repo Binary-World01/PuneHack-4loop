@@ -28,10 +28,13 @@ class LLMService:
         if self.use_mock:
             return self._mock_analysis(patient)
         
-        symptoms_text = "\n".join([
-            f"- {s.description} (Severity: {s.severity}/10, Duration: {s.duration_days} days)"
-            for s in patient.symptoms
-        ])
+        if isinstance(patient.symptoms, list):
+            symptoms_text = "\n".join([
+                f"- {s.description} (Severity: {s.severity}/10, Duration: {s.duration_days} days)"
+                for s in patient.symptoms
+            ])
+        else:
+            symptoms_text = str(patient.symptoms)
         
         prompt = f"""You are a medical AI assistant. Analyze these symptoms and provide:
 1. Most likely diagnosis
@@ -72,14 +75,21 @@ Respond in JSON format:
     
     def _mock_analysis(self, patient: PatientProfile) -> Dict[str, Any]:
         """Mock analysis for demo/testing"""
-        primary_symptom = patient.symptoms[0].description if patient.symptoms else "general malaise"
+        if isinstance(patient.symptoms, list) and patient.symptoms:
+            primary_symptom = patient.symptoms[0].description
+            severity = patient.symptoms[0].severity
+            duration = patient.symptoms[0].duration_days
+        else:
+            primary_symptom = str(patient.symptoms) if patient.symptoms else "general malaise"
+            severity = getattr(patient, 'severity', 5)
+            duration = getattr(patient, 'duration', 1)
         
         return {
-            "primary_diagnosis": f"Possible {primary_symptom.title()}-related condition",
+            "primary_diagnosis": f"Possible {primary_symptom[:50].title()}-related condition",
             "confidence": 0.75,
             "reasoning": [
-                f"Patient presents with {primary_symptom} at severity {patient.symptoms[0].severity}/10",
-                f"Duration of {patient.symptoms[0].duration_days} days suggests acute condition",
+                f"Patient presents with {primary_symptom} at intensity level {severity}/10",
+                f"Chronicity of {duration} days suggests acute presentation",
                 "Age and medical history considered",
                 "Differential diagnoses ruled out based on symptom pattern"
             ],

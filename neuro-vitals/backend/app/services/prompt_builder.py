@@ -1,6 +1,6 @@
 """
 Prompt Builder for Risk Prediction Engine.
-Migrated from neurofit_risk_engine14/prompt_builder.py (unchanged — pure function).
+Upgraded with deep clinical reasoning and detailed mapping from NeuroFit Risk Engine.
 """
 import json
 
@@ -9,10 +9,12 @@ def build_prompt(user_data: dict) -> str:
 
 ABSOLUTE RULE: Never write generic advice. Every single sentence must reference specific values from the user's data — their actual food items logged, exact sleep hours, exact water intake in litres, exact step count, exact medication names, exact illness names, exact symptoms. If data is missing, say so explicitly.
 
-The user data includes:
-- Profile (age, gender, height, weight, existing conditions, family history)
+- Profile (age, gender, height, weight, existing conditions, family history - combine Account data with current entries)
 - Daily logs (exact food eaten per meal, water litres, exercise minutes, sleep hours, symptoms, steps, calories)
-- Medical records: illness + prescription pairs, each analyzed together
+- Medical records: illness + prescription pairs, each analyzed together (combine real-time form with DB history)
+- Neuro Vitals: heart rate, precise steps, and sleep tracking from wearables
+- Symptom Analysis History: clinical assessments and diagnoses from previous Neuro-Vitals Symptom Checker records.
+- OCR History: medication data extracted from prescription scans.
 
 ═══════════════════════════════════════════════════════════════
 STEP 1 — BASELINE RISK FROM DAILY LOGS & PROFILE
@@ -79,40 +81,48 @@ OUTPUT FORMAT — VALID JSON ONLY. NO MARKDOWN. NO EXTRA TEXT.
     "[disease_key_for_every_disease_above_15]": {
       "score": 0-100,
       "zone": "Safe|Guarded|Elevated|High|Critical",
-      "primary_driver": "detailed clinical explanation",
-      "contributing_factors": ["factor1", "factor2"],
-      "what_changes_it": "specific action plan",
-      "evidence_tags": ["medical_record", "prescription", "diet", "low_sleep", "low_steps", "low_water", "family_history", "existing_condition", "symptoms"]
+      "primary_driver": "WRITE 3-4 SENTENCES MINIMUM. Detail the core cause using exact data values.",
+      "contributing_factors": [
+        "DIET FACTOR: 2+ sentences with exact data items.",
+        "SLEEP FACTOR: 2+ sentences with exact hours.",
+        "HYDRATION FACTOR: 2+ sentences with exact litres.",
+        "ACTIVITY FACTOR: 2+ sentences with exact steps.",
+        "VITALS FACTOR: 2+ sentences regarding heart rate and wearable trends.",
+        "SYMPTOM HISTORY FACTOR: 2+ sentences referencing previous checker results.",
+        "MEDICAL FACTOR: 2+ sentences with exact illnesses/drugs."
+      ],
+      "what_changes_it": "WRITE 4-5 SENTENCES with a specific action plan and numerical targets.",
+      "evidence_tags": ["medical_record", "prescription", "diet", "low_sleep", "low_steps", "low_water", "family_history", "existing_condition", "symptoms", "neuro_vitals", "symptom_checker"]
     }
   },
 
   "key_reasons": [
-    "MEDICAL HISTORY: detailed analysis",
-    "FOOD AND DIET: meal-by-meal analysis",
-    "SLEEP AND RECOVERY: analysis",
-    "HYDRATION AND WATER: analysis",
-    "ACTIVITY AND FITNESS: analysis",
-    "CASCADING AND COMPOUNDING RISKS: analysis"
+    "MEDICAL HISTORY: 5-7 sentences with exact data from records.",
+    "FOOD AND DIET: 5-7 sentences meal-by-meal analysis.",
+    "SLEEP AND RECOVERY: 4-6 sentences with exact data.",
+    "HYDRATION AND WATER: 3-5 sentences with exact litres.",
+    "ACTIVITY AND FITNESS: 4-6 sentences with exact steps/minutes.",
+    "CASCADING AND COMPOUNDING RISKS: 4-6 sentences explaining interactions."
   ],
 
   "trend_prediction": {
     "month_1": { "type2_diabetes": 0-100, "hypertension": 0-100, "heart_disease": 0-100, "copd": 0-100, "asthma": 0-100, "flu_covid": 0-100 },
-    "month_2": { ... },
-    "month_3": { ... },
-    "month_4": { ... },
-    "month_5": { ... },
-    "month_6": { ... }
+    "month_2": { "type2_diabetes": 0-100, "hypertension": 0-100, "heart_disease": 0-100, "copd": 0-100, "asthma": 0-100, "flu_covid": 0-100 },
+    "month_3": { "type2_diabetes": 0-100, "hypertension": 0-100, "heart_disease": 0-100, "copd": 0-100, "asthma": 0-100, "flu_covid": 0-100 },
+    "month_4": { "type2_diabetes": 0-100, "hypertension": 0-100, "heart_disease": 0-100, "copd": 0-100, "asthma": 0-100, "flu_covid": 0-100 },
+    "month_5": { "type2_diabetes": 0-100, "hypertension": 0-100, "heart_disease": 0-100, "copd": 0-100, "asthma": 0-100, "flu_covid": 0-100 },
+    "month_6": { "type2_diabetes": 0-100, "hypertension": 0-100, "heart_disease": 0-100, "copd": 0-100, "asthma": 0-100, "flu_covid": 0-100 }
   },
 
   "recommendations": [
-    "MEDICATION: detailed guidance",
-    "STOP EATING: specific foods to avoid",
-    "STOP THESE HABITS: specific habits",
-    "START EATING: meal plan",
-    "EXERCISE PLAN: progressive plan",
-    "SLEEP PROTOCOL: specific schedule",
-    "HYDRATION SCHEDULE: daily water plan",
-    "RED FLAGS: emergency symptoms"
+    "MEDICATION: 6-8 sentences with detailed timing/interactions.",
+    "STOP EATING: 5-7 sentences with exact problematic items.",
+    "STOP THESE HABITS: 4-6 sentences with numerical targets.",
+    "START EATING: 6-8 sentences with a specific meal plan.",
+    "EXERCISE PLAN: 5-7 sentences with specific workouts.",
+    "SLEEP PROTOCOL: 4-6 sentences with exact schedule.",
+    "HYDRATION SCHEDULE: 3-5 sentences with exact volumes/times.",
+    "RED FLAGS — GO TO HOSPITAL IF: 6-8 sentences with 4-6 specific symptoms."
   ]
 }
 

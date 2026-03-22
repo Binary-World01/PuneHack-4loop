@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     # Google Gemini (Outbreak Analysis)
     GOOGLE_API_KEY: Optional[str] = None
     
+    # GitHub Models Token
+    GITHUB_MODELS_TOKEN: Optional[str] = None
+    
     # Supabase Configuration
     SUPABASE_URL: Optional[str] = None
     SUPABASE_KEY: Optional[str] = None
